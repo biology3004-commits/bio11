@@ -47,3 +47,16 @@
     if (android && typeof showInstallBanner === 'function') setTimeout(() => { try { showInstallBanner(); } catch (e) {} }, 2500);
   } catch (e) {}
 })();
+
+// ── رابط مباشر لمحاكاة: ?sim=<key>&stage=<n> (للمشاركة وللتصوير الآلي) ──
+(function () {
+  try {
+    const p = new URLSearchParams(location.search); const k = p.get('sim'); if (!k) return;
+    const go = () => {
+      if (typeof showSimulations !== 'function' || typeof simulations === 'undefined' || !simulations[k]) return;
+      showSimulations(); switchSim(k);
+      const n = parseInt(p.get('stage') || '0', 10); if (n > 0) switchSimStage(k, n);
+    };
+    if (document.readyState === 'complete') setTimeout(go, 300); else window.addEventListener('load', () => setTimeout(go, 300));
+  } catch (e) {}
+})();
