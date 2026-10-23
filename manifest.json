@@ -1,0 +1,66 @@
+{
+  "name": "منصة الأحياء التفاعلية — الصف الحادي عشر",
+  "short_name": "أحياء ١١",
+  "description": "ألعاب تعليمية ومولّد أسئلة لمادة الأحياء — الصف الحادي عشر، الفصل الدراسي الأوَّل، سلطنة عُمان",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#e0f2f1",
+  "theme_color": "#00695c",
+  "lang": "ar",
+  "dir": "rtl",
+  "categories": ["education", "science"],
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "icon-192.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "من سيربح المليون",
+      "short_name": "المليون",
+      "description": "ابدأ لعبة من سيربح المليون",
+      "url": "./?action=millionaire"
+    },
+    {
+      "name": "سباق المعرفة",
+      "short_name": "سباق",
+      "description": "ابدأ سباق المعرفة",
+      "url": "./?action=race"
+    },
+    {
+      "name": "مولّد الأسئلة",
+      "short_name": "أسئلة",
+      "description": "توليد أسئلة للمراجعة",
+      "url": "./?action=generator"
+    }
+  ]
+}

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Maskable icon: content kept inside the inner 80% safe zone so Android
+     launcher masks (circle, squircle, etc.) never clip the important parts. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#003d33"/>
+      <stop offset="100%" stop-color="#00897b"/>
+    </linearGradient>
+    <linearGradient id="dna" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffd54f"/>
+      <stop offset="100%" stop-color="#ff9800"/>
+    </linearGradient>
+  </defs>
+  <!-- Full bleed background -->
+  <rect width="512" height="512" fill="url(#bg)"/>
+  <!-- Safe zone content: 40% padding from each edge so it's still visible under any launcher mask -->
+  <g transform="translate(102.4, 102.4) scale(0.6)">
+    <g stroke="url(#dna)" stroke-width="30" stroke-linecap="round" fill="none">
+      <path d="M160 85 C 352 170, 160 256, 352 341 C 160 426, 352 426, 352 426"/>
+      <path d="M352 85 C 160 170, 352 256, 160 341 C 352 426, 160 426, 160 426"/>
+    </g>
+    <g stroke="#ffffff" stroke-width="17" stroke-linecap="round" opacity="0.85">
+      <line x1="176" y1="134" x2="336" y2="134"/>
+      <line x1="208" y1="192" x2="304" y2="192"/>
+      <line x1="208" y1="256" x2="304" y2="256"/>
+      <line x1="208" y1="320" x2="304" y2="320"/>
+      <line x1="176" y1="378" x2="336" y2="378"/>
+    </g>
+  </g>
+</svg>

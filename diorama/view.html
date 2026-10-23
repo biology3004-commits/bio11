@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ديوراما تعليميَّة</title>
+<link rel="stylesheet" href="diorama.css">
+</head>
+<body>
+<div id="wrap"><div id="stage">
+  <canvas id="gl" width="1600" height="900"></canvas>
+  <svg id="lines" viewBox="0 0 1600 900" width="1600" height="900"></svg>
+  <div id="title"><h1 id="tTitle"></h1><p id="tSub"></p></div>
+  <div id="labels"></div>
+  <div id="legend"><h3>مفتاح الألوان</h3><div id="legendRows"></div></div>
+  <div id="cap"><i id="abar"></i><div class="k" id="capK"></div><h2 id="capT"></h2><p id="capP"></p><small id="capN"></small></div>
+  <div id="hint">انقر «التالي» أو المجسَّم للتقدُّم · «تلقائي» يعرض الخطوات تباعاً (P) · اسحب المجسَّم لتدويره · نقرة مزدوجة تعيد الزاوية</div>
+  <div id="nav"><button id="bNext">التالي ◀</button><div id="dots"></div><button id="bPrev" class="sec">▶ السابق</button><button id="bReset" class="sec">⟲ من البداية</button><button id="bAuto" class="sec" title="عرض الخطوات تباعاً ثم الإعادة (P)">▶ تلقائي</button></div>
+  <div id="src"></div>
+  <button id="bFull" title="ملء الشاشة">⛶ ملء الشاشة</button>
+</div></div>
+<!-- وضع الهاتف: النص والأزرار خارج المشهد المقلَّص بحجم قراءة طبيعي -->
+<div id="mcap"><i id="mabar"></i><div class="k" id="mcapK"></div><h2 id="mcapT"></h2><p id="mcapP"></p><small id="mcapN"></small></div>
+<div id="mnav"><button id="mPrev" class="sec">▶ السابق</button><button id="mAuto" class="sec" title="عرض الخطوات تباعاً">▶ تلقائي</button><div id="mdots"></div><button id="mNext">التالي ◀</button></div>
+<script src="three.min.js"></script>
+<script src="diorama_core.js"></script>
+<script>
+(function () {
+  var id = (new URLSearchParams(location.search).get('d') || 'dna').replace(/[^a-z0-9_-]/gi, '');
+  var s = document.createElement('script'); s.src = id + '.js';
+  s.onload = function () { if (window.DIORAMA) DioramaCore.start(window.DIORAMA); else document.getElementById('tTitle').textContent = 'تعذَّر تحميل الديوراما'; };
+  s.onerror = function () { document.getElementById('tTitle').textContent = 'الديوراما غير موجودة: ' + id; };
+  document.body.appendChild(s);
+})();
+</script>
+</body>
+</html>
