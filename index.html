@@ -60,8 +60,8 @@
 <!-- iOS (Safari) PWA support -->
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="أحياء ١٢">
-<link rel="apple-touch-icon" href="icon-192.svg">
+<meta name="apple-mobile-web-app-title" content="أحياء ١١">
+<link rel="apple-touch-icon" href="icon-192.png">
 <link rel="icon" type="image/svg+xml" href="icon-192.svg">
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800;900&display=swap');
@@ -3509,7 +3509,7 @@ body :not(.header *)[style*="font-size:0.74rem"] { font-size: 0.78rem !important
       });
     })();
     </script>
-    <span id="appVersionTag" dir="ltr" title="تاريخ الإصدار · رقم النشر (يطابق CACHE_VERSION في sw.js)" style="background:#eceff1;color:#37474f;padding:3px 9px;border-radius:6px;font-size:0.68rem;font-weight:600;">v2026.10.23 · 1</span>
+    <span id="appVersionTag" dir="ltr" title="تاريخ الإصدار · رقم النشر (يطابق CACHE_VERSION في sw.js)" style="background:#eceff1;color:#37474f;padding:3px 9px;border-radius:6px;font-size:0.68rem;font-weight:600;">v2026.10.24 · 2</span>
     <span id="streakBadge" title="" style="display:none;background:linear-gradient(135deg,#d84315,#f4511e);color:white;padding:3px 9px;border-radius:6px;font-size:0.7rem;font-weight:700;align-items:center;gap:5px;cursor:pointer;box-shadow:0 2px 6px rgba(216,67,21,0.3);" onclick="document.querySelector('.nav-tab[data-tab=&quot;assistant&quot;]').click(); setTimeout(() => kbAskChip('تحدِّي اليوم'), 200);">
       <span style="font-size:0.85rem;line-height:1;">🔥</span>
       <span class="streak-value">0</span>
@@ -5263,7 +5263,7 @@ document.addEventListener('DOMContentLoaded', () => {
       <label style="font-weight:700;color:#4527a0;display:block;margin-bottom:8px;">&#x1F3AF; اختر الوحدة:</label>
       <select id="gameUnitSelect" style="width:100%;padding:9px 12px;border:2px solid #7e57c2;border-radius:8px;font-family:'Tajawal';font-size:0.9rem;font-weight:600;background:white;margin-bottom:10px;">
         <option value="all">&#x1F30D; جميع الوحدات (شامل)</option>
-        <option value="9">الوحدة 9: التنوع الحيوي والحفاظ على البيئة</option>
+        <option value="1">الوحدة 1: تركيب الخليَّة</option><option value="2">الوحدة 2: الجزيئات الحيويَّة</option><option value="3">الوحدة 3: الإنزيمات</option><option value="4">الوحدة 4: دورة الخليَّة والانقسام المتساوي</option>
       </select>
       <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
         <button onclick="shuffleGameQuestions()" style="background:linear-gradient(135deg,#7e57c2,#9575cd);color:white;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-family:'Tajawal';font-weight:700;font-size:0.85rem;display:inline-flex;align-items:center;gap:6px;box-shadow:0 2px 6px rgba(126,87,194,0.3);transition:transform .15s ease;" onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform='translateY(0)'">🔀 خلط الأسئلة من جديد</button>
