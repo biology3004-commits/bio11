@@ -29,6 +29,8 @@
 <script src="data/g11_visuals.js"></script>
 <script src="data/g11_sims_u1.js"></script>
 <script src="data/g11_sims_u2.js"></script>
+<script src="data/g11_sims_u3.js"></script>
+<script src="data/g11_sims_u4.js"></script>
 <script src="data/g11_content.js"></script>
 <script src="data/g11_labs.js"></script>
 <!-- Google tag (gtag.js) -->
@@ -3511,7 +3513,7 @@ body :not(.header *)[style*="font-size:0.74rem"] { font-size: 0.78rem !important
       });
     })();
     </script>
-    <span id="appVersionTag" dir="ltr" title="تاريخ الإصدار · رقم النشر (يطابق CACHE_VERSION في sw.js)" style="background:#eceff1;color:#37474f;padding:3px 9px;border-radius:6px;font-size:0.68rem;font-weight:600;">v2026.10.24 · 4</span>
+    <span id="appVersionTag" dir="ltr" title="تاريخ الإصدار · رقم النشر (يطابق CACHE_VERSION في sw.js)" style="background:#eceff1;color:#37474f;padding:3px 9px;border-radius:6px;font-size:0.68rem;font-weight:600;">v2026.10.24 · 5</span>
     <span id="streakBadge" title="" style="display:none;background:linear-gradient(135deg,#d84315,#f4511e);color:white;padding:3px 9px;border-radius:6px;font-size:0.7rem;font-weight:700;align-items:center;gap:5px;cursor:pointer;box-shadow:0 2px 6px rgba(216,67,21,0.3);" onclick="document.querySelector('.nav-tab[data-tab=&quot;assistant&quot;]').click(); setTimeout(() => kbAskChip('تحدِّي اليوم'), 200);">
       <span style="font-size:0.85rem;line-height:1;">🔥</span>
       <span class="streak-value">0</span>
@@ -5183,14 +5185,14 @@ document.addEventListener('DOMContentLoaded', () => {
       <div class="icon" style="background:linear-gradient(135deg,#1b5e20,#66bb6a); color:white;">&#x1F52C;</div>
       <div>
         <h2>المختبر الافتراضي</h2>
-        <p style="font-size:0.85rem; color:var(--text-light);">تجارب تفاعلية — غيِّر المتغيرات وشاهد الاستجابة آنياً، وسجّل قراءاتك ثم صدّرها</p>
+        <p style="font-size:0.85rem; color:var(--text-light);">الاستقصاءات العمليَّة بخطوات كتاب الأنشطة وإجابات دليل المعلِّم — ومع كلِّ استقصاء محاكاة تفاعليَّة تغيِّر فيها المتغيِّرات وترى النتيجة</p>
       </div>
     </div>
 
     <!-- S1: الاستقصاءات العملية المعتمدة على كتاب الأنشطة ودليل المعلم -->
     <div id="labS1Notice" style="display:none;">
       <div style="background:#e8f5e9;border-right:4px solid #2e7d32;padding:14px 18px;border-radius:10px;color:#1b5e20;font-size:0.9rem;margin-bottom:16px;">
-        🔬 <strong>الاستقصاءات العمليَّة للفصل الأوَّل</strong> — منقولة حرفيّاً من <strong>كتاب التجارب العملية والأنشطة</strong>، وتوجيهات المعلِّم والإجابات النموذجيَّة من <strong>دليل المعلِّم</strong>. الاستقصاءات الثمانية للوحدات الأربع (استقصاءات الوحدتين ٣ و٤ من دليل المعلِّم؛ خطوات الطالب فيها تُستكمل من الجزء الثاني لكتاب الأنشطة).
+        🔬 <strong>الاستقصاءات العمليَّة للفصل الأوَّل</strong> — منقولة حرفيّاً من <strong>كتاب التجارب العملية والأنشطة</strong>، وتوجيهات المعلِّم والإجابات النموذجيَّة من <strong>دليل المعلِّم</strong>. الاستقصاءات الثمانية للوحدات الأربع، ولكلِّ استقصاء محاكاة تفاعليَّة يفتحها زرُّ «▶ جرِّب المحاكاة» في أعلاه.
       </div>
       <div class="lab-grid" id="labSelectorS1">
         <div class="lab-card" style="background:linear-gradient(135deg,#00695c,#4db6ac);" onclick="showLab('inv_1_1_slide')">
@@ -21879,6 +21881,7 @@ function renderProtocolLab(lab) {
       </div>
       <div style="background:#e3f2fd;border-right:3px solid #1565c0;padding:8px 12px;border-radius:8px;margin-bottom:10px;font-size:0.82rem;color:#0d47a1;display:flex;flex-wrap:wrap;gap:10px;align-items:center;">${chips}</div>
       <div class="lab-objective"><strong>\u{1F3AF} الهدف:</strong> ${lab.objective}</div>
+      ${(lab.sim && typeof simulations === 'object' && simulations[lab.sim]) ? `<button onclick="showSimulations(); switchSim('${lab.sim}');${lab.simStage ? ` switchSimStage('${lab.sim}', ${lab.simStage});` : ''}" style="display:block;width:100%;margin:0 0 12px;background:linear-gradient(135deg,#00695c,#26a69a);color:#fff;border:none;border-radius:10px;padding:12px 16px;font-family:inherit;font-size:1rem;font-weight:800;cursor:pointer;box-shadow:0 3px 10px rgba(0,105,92,.3);">▶ جرِّب المحاكاة التفاعليَّة: ${simulations[lab.sim].title}</button>` : ''}
       ${_plSection('🎯 أهداف الاستقصاء العملي' + (lab.duration ? ' والمدَّة' : ''),
         _pl(lab.labObjectives) + (lab.duration ? `<div style="background:#f3e5f5;padding:7px 10px;border-radius:6px;margin-top:6px;"><strong>⏱ المدَّة:</strong> ${lab.duration}</div>` : ''), true)}
       ${_plSection('📘 مقدِّمة الاستقصاء', lab.intro ? `<p style="margin:0;">${lab.intro}</p>` : '')}

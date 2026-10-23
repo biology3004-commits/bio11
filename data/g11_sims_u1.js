@@ -787,3 +787,338 @@
     }
   });
 })();
+
+
+// =====================================================================
+// 4) g11_slide — إعداد شريحة مجهريّة مؤقّتة ورسم الخلايا (الاستقصاء العملي ١-١)
+// خطوات التحضير حرفيّاً من كتاب التجارب العمليَّة والأنشطة (المطبوعة ٣٨–٤٢) وكتاب الطالب (مهارات عمليَّة ١-١ ص ٢٦، وص ٢٢)،
+// ومعايير تقييم الرسم من دليل المعلِّم (الجدول ١-١ ص ٨١). أسماء الأزرار القصيرة ورسائل الرفض من صياغة المنصَّة (مع اقتباس الكتاب).
+// =====================================================================
+(function(){
+  const G = window.G11_DATA = window.G11_DATA || {};
+  const F = 'Tajawal, Cairo, sans-serif';
+  const TEAL = '#00695c', DARK = '#003d33', LIGHT = '#e0f2f1', RED = '#C8102E', GREEN = '#009A44';
+  const $ = id => document.getElementById(id);
+  const AR = n => String(n).replace(/[0-9]/g, d => '٠١٢٣٤٥٦٧٨٩'[d]);
+  const S = {
+    wrap: `width:100%;max-width:700px;margin:0 auto;direction:rtl;font-family:${F};color:#1a1a1a;text-align:right;`,
+    ctrl: `display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;padding:8px 10px;background:${LIGHT};border-radius:10px;margin-top:6px;font-size:16px;`,
+    panel: `background:#fff;border:2px solid #b2dfdb;border-radius:10px;padding:8px 12px;margin-top:6px;font-size:16px;line-height:1.9;`,
+    rng: `width:200px;accent-color:${TEAL};vertical-align:middle;`,
+  };
+  const btn = (on, extra) => `font-family:${F};font-size:16px;padding:5px 12px;border-radius:8px;border:2px solid ${TEAL};cursor:pointer;` +
+    (on ? `background:${TEAL};color:#fff;` : `background:#fff;color:${DARK};`) + (extra || '');
+  const L = s => `<span dir="ltr" style="unicode-bidi:isolate;white-space:nowrap;">${s}</span>`;
+  const svgOpen = (h, id) => `<svg ${id ? `id="${id}" ` : ''}viewBox="0 0 700 ${h}" width="100%" style="display:block;max-width:700px;margin:0 auto;background:#fff;border-radius:10px;font-family:${F};direction:ltr;" xmlns="http://www.w3.org/2000/svg">`;
+  function T(x, y, s, o){
+    o = o || {};
+    const an = o.a || 'middle', a2 = o.ltr ? an : (an === 'end' ? 'start' : (an === 'start' ? 'end' : an));
+    return `<text x="${x}" y="${y}" font-size="${o.fs || 16}" fill="${o.c || '#1a1a1a'}" text-anchor="${a2}"` +
+      `${o.b ? ' font-weight="700"' : ''}${o.ltr ? ' direction="ltr"' : ' direction="rtl"'}${o.x || ''}>${s}</text>`;
+  }
+  const AB = 'كتاب التجارب العمليَّة والأنشطة', TG = 'دليل المعلِّم';
+  const src = (p, book) => `<span style="color:#546e7a;">(${book || 'كتاب الطالب'} ص ${AR(p)})</span>`;
+  const ok = s => `<div style="color:${GREEN};font-weight:700;">✓ ${s}</div>`;
+  const warn = s => `<div style="color:${RED};font-weight:700;">⚠ ${s}</div>`;
+  function rng(seed){ let a = seed >>> 0; return () => { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+
+  // ---------------- العيِّنات والصبغات ----------------
+  const SAMPLES = { onion:'بشرة البصل (نباتيّة)', cheek:'خلايا بطانة الخدّ (حيوانيّة)' };
+  const STAINS = { water:'ماء فقط (بلا صبغة)', iodine:'محلول يوديد البوتاسيوم (اليود)', mb:'محلول أزرق الميثيلين المخفّف' };
+  const Q_STAIN = `«ويشيع استخدام عدد من الصبغات المؤقّتة، على سبيل المثال: محلول يوديد البوتاسيوم مفيد لعيّنات النبات، فهو يصبغ باللون الأزرق الداكن، ويلوّن النواة والجدار الخلوي باللون الأصفر الفاتح. ويستخدم محلول أزرق الميثيلين المخفّف لصبغ الخلايا الحيوانيّة، مثل خلايا باطن الخد.» ${src(26)}`;
+  const Q_CLEAR = `«في الخليّة توجد مكوّنات كثيرة شفّافة وعديمة اللون، لذا يجب صبغها بصبغات ملوّنة ليمكن رؤيتها.» ${src(22)}`;
+  // خطوات التحضير (نصّ الكتاب) + المتطلَّبات السابقة + سبب الرفض
+  const STEPS = {
+    o1: { b:'اقطع قطعة بصل (1 × 1) سم', x:'استخدم المقص أو شفرة حادّة لتحصل على قطعة من الطبقات الداخلية لبصلة بقياس (1 × 1) سم تقريبًا.', p:[39, AB], need:[] },
+    o2: { b:'قطرة ماء على الشريحة', x:'استخدم القطّارة لتضع قطرة ماء على مركز شريحة مجهر نظيفة.', p:[39, AB], need:[] },
+    o3: { b:'انزع القشرة وضعها على القطرة', x:'استخدم الملقط بلطف لتنزع القشرة الرقيقة عن السطح الداخلي لقطعة البصل، ثم ضعها مباشرة فوق قطرة الماء على الشريحة، معتمدًا على إبرة تثبيت أو مسبار لتمد قشرة البصل بلطف بحيث لا تنثني أو يتسرّب إليها ماء. قد تحتاج إلى إضافة قطرة ماء أخرى.', p:[39, AB], need:['o1', 'o2'],
+      why:{ o1:'لا قشرة بعدُ: ابدأ بـ«قطعة من الطبقات الداخلية لبصلة».', o2:'القشرة توضع «مباشرة فوق قطرة الماء على الشريحة» — ضع القطرة أوَّلًا.' } },
+    o4: { b:'أنزل غطاء الشريحة', x:'أنزل غطاء الشريحة بلطف فوق الشريحة لتغطية قشرة البصل. يمكن أن يساعدك استخدام إبرة المسبار كما في الشكل ١-٢ على منع حبس أية فقاعة هواء. وإذا تكوّنت فقاعة هواء، فعليك تجاهلها أثناء رسم العيّنة.', p:[39, AB], need:['o3'],
+      why:{ o3:'الغطاء يُنزَل «لتغطية قشرة البصل» — ضع القشرة على قطرة الماء أوَّلًا.' } },
+    o5: { b:'أزل الماء الزائد بورق الترشيح', x:'استخدم ورق الترشيح بلطف لإزالة أية قطرة ماء قد تتسرّب إلى سطح الشريحة.', p:[40, AB], need:['o4'],
+      why:{ o4:'ورق الترشيح يزيل «أية قطرة ماء قد تتسرّب إلى سطح الشريحة» بعد إنزال الغطاء؛ و«إذا تركت الماء على سطح الشريحة، فقد يصل إلى العدسة الشيئيّة».' } },
+    o6: { b:'قطرة يود عند حافة الغطاء', x:'ضع قطرة صغيرة من محلول اليود على شريحة مجهر لتلامس حافة غطاء الشريحة.', p:[42, AB], need:['o5'],
+      why:{ o5:'قطرة اليود توضع «لتلامس حافة غطاء الشريحة» — أكمل إعداد الشريحة المغطّاة (الجزء ١) أوَّلًا.' } },
+    o7: { b:'اسحب اليود بورقة ترشيح من الجهة المقابلة', x:'ضع بحذر شديد طرف قطعة من ورقة الترشيح بتماسّ مع الجانب المقابل من غطاء الشريحة، كما يبدو في الشكل ١-٣. ستمتصّ ورقة الترشيح الماء الموجود تحت غطاء الشريحة ما يؤدّي إلى تمرير محلول اليود إلى العيّنة.', p:[42, AB], need:['o6'],
+      why:{ o6:'ورقة الترشيح «ستمتصّ الماء … ما يؤدّي إلى تمرير محلول اليود إلى العيّنة» — ضع قطرة اليود عند الحافة أوَّلًا.' } },
+    c1: { b:'اكشط بطانة الخدّ', x:'العينة الحيوانيّة المناسبة: خلايا من بطانة خدّ الإنسان، تؤخذ عبر كشط بطانة الخدّ باستخدام أعواد تنظيف الأذن.', p:[26], need:[] },
+    c2: { b:'ضع العيّنة على الشريحة', x:'ضع العيّنة الأحيائية على شريحة زجاجيّة نظيفة،', p:[26], need:['c1'],
+      why:{ c1:'لا عيّنة بعدُ: الخلايا «تؤخذ عبر كشط بطانة الخدّ باستخدام أعواد تنظيف الأذن».' } },
+    c3: { b:'أضف قطرة من الصبغة', x:'وأضف قطرة أو قطرتَين من الصبغة.', p:[26], need:['c2'],
+      why:{ c2:'«ضع العيّنة الأحيائية على شريحة زجاجيّة نظيفة، وأضف قطرة أو قطرتَين من الصبغة» — العيّنة أوَّلًا.' } },
+    c4: { b:'قطرة جليسرين (اختياري)', x:'كما يمكن تلافي جفاف العيّنة بإضافة قطرة من الجليسرين، ومزجها مع الصبغة.', p:[26], need:['c3'], opt:true, before:'c5',
+      why:{ c3:'الجليسرين يُمزج «مع الصبغة» — أضف الصبغة أوَّلًا.', c5:'الجليسرين يُمزج «مع الصبغة» قبل تغطية العيّنة.' } },
+    c5: { b:'غطِّ العيّنة', x:'غَطِّ العيّنة لحماية عدسة المجهر وتفاديًا لجفاف العيّنة.', p:[26], need:['c3'],
+      why:{ c3:'غطِّ العيّنة بعد إضافة الصبغة: «وأضف قطرة أو قطرتَين من الصبغة. غَطِّ العيّنة…».' } }
+  };
+  const RECIPE = { 'onion-water':['o1', 'o2', 'o3', 'o4', 'o5'], 'onion-iodine':['o1', 'o2', 'o3', 'o4', 'o5', 'o6', 'o7'], 'cheek-mb':['c1', 'c2', 'c3', 'c4', 'c5'] };
+
+  // ---------------- معايير الرسم (الجدول ١-١ في دليل المعلِّم ص ٨١) ----------------
+  const CRIT = [
+    { c:'يغطّي نصف المساحة المتوافرة على الأقل', r:'يجب أن يكون رسمك كبيرًا، يشغل 50 % على الأقل من المساحة المتاحة. تأكّد من ترك مساحة كافية لكتابة المسميات.', p:41 },
+    { c:'مرسوم بقلم HB حاد', r:'استخدم قلم جرافيت من النوع (HB حاد).', p:41 },
+    { c:'جميع الخطوط واضحة ومنفردة، من دون تداخل أو تقطع', r:'يجب رسم جميع الخطوط منفردة وواضحة، مع عدم ترك أي فراغات فيها مهما كانت صغيرة.', p:41 },
+    { c:'تمّ رسم جدران الخلايا بخطَّين', r:'ارسم الجدران الخلويّة دائمًا بخطَّين، لأنّها جدران سميكة.', p:42 },
+    { c:'نسب التراكيب المختلفة صحيحة', r:'احرص على الالتزام بدقة أشكال الخلايا وقياساتها.', p:41 },
+    { c:'لا يوجد تظليل', r:'لا تستخدم التظليل في رسمك على الإطلاق.', p:42 },
+    { c:'خطوط المسمّيات مرسومة بالمسطرة وتلمس نهاية الخط الجزء الذي يراد تسميته', r:'استخدم مسطرة لرسم خطوط المسميات، وتأكّد من أن تلمس نهاية الخط الجزء الذي تقوم بتسميته.', p:42 },
+    { c:'المسميات مكتوبة بوضوح ولا تتداخل مع الرسم', r:'حافظ على خطوط المسميات منفصلة بعضها عن بعض. يمكن أن تكون خطوط المسميات بأيّ اتجاه، لكن يجب أن تكتب المسميات بشكل أفقي.', p:42 }
+  ];
+  // true = المعيار متحقِّق في الرسم
+  const TRUTH = { a:[false, true, true, false, true, false, false, true], b:[true, false, false, true, false, true, true, false] };
+  // مواضع أخطاء كلِّ رسم (لعلامات التصحيح)
+  const SPOTS = { a:{ 0:[350, 268], 3:[300, 196], 5:[392, 205], 6:[258, 146] }, b:{ 1:[100, 70], 2:[330, 66], 4:[230, 200], 7:[600, 236] } };
+
+  const M = window.G11SIM_slide = {
+    s: null,
+    reset(){ this.s = { sample:'', stain:'', seq:[], msg:'', view:'', obj:0, coarse:15, fine:0, fmsg:'', dr:'a', ans:{ a:new Array(8).fill(null), b:new Array(8).fill(null) }, chk:{ a:false, b:false } }; },
+    // ---------- منطق (يُختبر آليّاً) ----------
+    validPair(sample, stain){
+      if (sample === 'onion' && stain === 'mb') return { ok:false, why:`أزرق الميثيلين المخفّف لصبغ الخلايا الحيوانيّة، أمّا عيّنات النبات فيفيدها محلول يوديد البوتاسيوم. ${Q_STAIN}` };
+      if (sample === 'cheek' && stain === 'iodine') return { ok:false, why:`محلول يوديد البوتاسيوم مفيد لعيّنات النبات، أمّا خلايا باطن الخدّ فتُصبغ بأزرق الميثيلين المخفّف. ${Q_STAIN}` };
+      if (sample === 'cheek' && stain === 'water') return { ok:false, why:`خلايا بطانة الخدّ تحتاج إلى صبغة: ${Q_CLEAR}` };
+      return { ok:true };
+    },
+    recipe(){ const s = this.s; return RECIPE[s.sample + '-' + s.stain] || null; },
+    tryStep(id){
+      const s = this.s, st = STEPS[id];
+      if (s.seq.indexOf(id) >= 0) return '';
+      const miss = st.need.find(n => s.seq.indexOf(n) < 0);
+      if (miss) return st.why[miss];
+      if (st.before && s.seq.indexOf(st.before) >= 0) return st.why[st.before];
+      s.seq.push(id); return '';
+    },
+    complete(){ const r = this.recipe(); return !!r && r.every(id => STEPS[id].opt || this.s.seq.indexOf(id) >= 0); },
+    blur(){ const s = this.s, target = s.obj ? 64 : 60, f = s.coarse + s.fine * 0.25; return Math.min(9, Math.abs(f - target) * 0.5); },
+    score(dr){ const a = this.s.ans[dr]; return a.reduce((n, v, i) => n + (v === TRUTH[dr][i] ? 1 : 0), 0); },
+
+    // ================= المرحلة 0: حضِّر الشريحة =================
+    slideSvg(){
+      const s = this.s, has = id => s.seq.indexOf(id) >= 0;
+      let o = svgOpen(270, 'g11s_svg') + `<rect x="100" y="80" width="500" height="120" rx="4" fill="#e3f2fd" stroke="#90a4ae" stroke-width="2"/>` + T(350, 225, 'شريحة مجهريّة', { c:'#78909c' });
+      const cover = `<rect x="285" y="75" width="130" height="130" fill="#ffffff" opacity="0.5" stroke="#607d8b" stroke-width="2"/>`;
+      if (s.sample === 'onion') {
+        if (has('o1')) o += `<rect x="20" y="20" width="62" height="62" rx="8" fill="#f3e5f5" stroke="#ab47bc" stroke-width="2"/>` + T(51, 102, 'قطعة بصل', { fs:16 });
+        if (has('o2')) o += `<ellipse cx="350" cy="140" rx="${has('o3') ? 52 : 34}" ry="${has('o3') ? 40 : 24}" fill="#bbdefb" opacity="0.8"/>`;
+        if (has('o3')) o += `<path d="M318,118 L376,112 L388,150 L362,170 L318,164 L308,140 z" fill="#f8f4e3" opacity="0.85" stroke="#bdb38c" stroke-width="1.5"/>` + T(540, 40, 'قشرة البصل في قطرة ماء', { fs:16, c:'#6d4c41' });
+        if (has('o4')) o += cover + T(350, 65, 'غطاء الشريحة', { fs:16, c:'#455a64' });
+        if (has('o4') && !has('o5')) o += `<ellipse cx="440" cy="150" rx="14" ry="8" fill="#90caf9"/><ellipse cx="265" cy="120" rx="10" ry="6" fill="#90caf9"/>` + T(520, 120, 'ماء تسرّب', { fs:16, c:'#1565c0' });
+        if (has('o6')) o += `<ellipse cx="${has('o7') ? 282 : 272}" cy="140" rx="${has('o7') ? 6 : 14}" ry="${has('o7') ? 5 : 10}" fill="#a1661b"/>` + T(220, 60, 'محلول اليود', { fs:16, c:'#8d5a14' });
+        if (has('o7')) o += `<rect x="286" y="76" width="128" height="128" fill="#d9a441" opacity="0.35"/><rect x="412" y="105" width="60" height="70" fill="#fffde7" stroke="#bdbdbd" stroke-width="2"/>` + T(445, 195, 'ورقة ترشيح', { fs:16, c:'#757575' }) +
+          `<line x1="300" y1="140" x2="400" y2="140" stroke="#8d5a14" stroke-width="2" marker-end="url(#g11s_ar)"/>`;
+      } else if (s.sample === 'cheek') {
+        if (has('c1')) o += `<line x1="30" y1="40" x2="90" y2="70" stroke="#90a4ae" stroke-width="4"/><ellipse cx="92" cy="71" rx="10" ry="7" fill="#fafafa" stroke="#bdbdbd"/>` + T(70, 102, 'عود تنظيف الأذن', { fs:16 });
+        if (has('c2')) o += `<ellipse cx="350" cy="140" rx="40" ry="20" fill="#f5f5f5" stroke="#cfd8dc" stroke-dasharray="3 2"/>`;
+        if (has('c3')) o += `<ellipse cx="350" cy="140" rx="46" ry="26" fill="#5c8fd6" opacity="0.55"/>` + T(540, 40, 'قطرة أزرق الميثيلين', { fs:16, c:'#1f4e9c' });
+        if (has('c4')) o += `<ellipse cx="350" cy="140" rx="52" ry="30" fill="none" stroke="#9fa8da" stroke-width="2" stroke-dasharray="4 3"/>` + T(230, 60, 'جليسرين', { fs:16, c:'#5c6bc0' });
+        if (has('c5')) o += cover + T(350, 65, 'غطاء الشريحة', { fs:16, c:'#455a64' });
+      } else o += T(350, 145, 'اختر العيّنة والصبغة', { fs:18, c:'#90a4ae' });
+      if (this.complete()) o += T(350, 258, '✓ الشريحة المؤقّتة جاهزة — انتقل إلى «تحت المجهر»', { fs:17, b:1, c:GREEN });
+      o += `<defs><marker id="g11s_ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#8d5a14"/></marker></defs>`;
+      return o + '</svg>';
+    },
+    prepView(){
+      const s = this.s, pair = s.sample && s.stain ? this.validPair(s.sample, s.stain) : null, r = pair && pair.ok ? this.recipe() : null;
+      let h = `<div style="${S.ctrl}"><b>١. العيّنة:</b>` + Object.keys(SAMPLES).map(k => `<button style="${btn(s.sample === k)}" onclick="G11SIM_slide.pick('sample','${k}')">${SAMPLES[k]}</button>`).join('') + '</div>';
+      h += `<div style="${S.ctrl}"><b>٢. الصبغة:</b>` + Object.keys(STAINS).map(k => `<button style="${btn(s.stain === k)}" onclick="G11SIM_slide.pick('stain','${k}')">${STAINS[k]}</button>`).join('') + '</div>';
+      h += `<div id="g11s_draw" style="margin-top:6px;">${this.slideSvg()}</div>`;
+      if (pair && !pair.ok) return h + `<div style="${S.panel}">${warn('لا يناسب هذا الاختيار:')}<div>${pair.why}</div></div>`;
+      if (!r) return h + `<div style="${S.panel}">اختر العيّنة ثمّ الصبغة؛ وتظهر بعدها خطوات التحضير لترتّبها. العيّنات النباتيّة المناسبة في الكتاب: «خلايا بشرة البصل، خلايا بشرة الخسّ، خلايا طحلب الكلوريلا، أوراق نبات حزازي» ${src(26)}</div>`;
+      if (s.sample === 'onion' && s.stain === 'water') h += `<div style="${S.panel}">${ok('مناسب للجزء ١ من الاستقصاء ١-١ (قشرة البصل في قطرة ماء)؛ وفي الجزء ٣ تُضاف صبغة اليود.')}</div>`;
+      // أزرار الخطوات بترتيب مخلوط ثابت
+      const rr = rng(r.length * 7 + (s.sample === 'onion' ? 3 : 5)), order = r.slice();
+      for (let i = order.length - 1; i > 0; i--) { const j = Math.floor(rr() * (i + 1)); [order[i], order[j]] = [order[j], order[i]]; }
+      h += `<div style="${S.ctrl}"><b>٣. رتّب خطوات التحضير (انقر بالترتيب):</b>` + order.map(id => {
+        const d = s.seq.indexOf(id) >= 0;
+        return `<button style="${btn(false, d ? `opacity:0.45;border-color:${GREEN};color:${GREEN};` : '')}" ${d ? 'disabled' : ''} onclick="G11SIM_slide.step('${id}')">${d ? '✓ ' : ''}${STEPS[id].b}</button>`;
+      }).join('') + `<button style="${btn(false, 'border-color:#78909c;color:#455a64;')}" onclick="G11SIM_slide.restart()">↺ من جديد</button></div>`;
+      h += `<div style="${S.panel}">` + (s.msg ? warn(s.msg) : '') + (s.seq.length ? s.seq.map((id, i) => `<div><b style="color:${TEAL};">${AR(i + 1)}.</b> «${STEPS[id].x}» ${src(STEPS[id].p[0], STEPS[id].p[1])}</div>`).join('') : '<span style="color:#78909c;">لم تنفّذ أيّ خطوة بعد.</span>');
+      if (s.sample === 'cheek') h += `<div style="color:#455a64;">«تذكّر الالتزام بالمعايير الصحية عند التعامل مع العينات البيولوجية، وبخاصة العينات الحيوانية.» ${src(26)}</div>`;
+      else h += `<div style="color:#455a64;">«توخَّ الحذر عند استخدام شفرة حادّة لنزع قشرة البصلة الرقيقة.» ${src(38, AB)}</div>`;
+      return h + '</div>';
+    },
+    refreshPrep(){ const e = $('g11s_prep'); if (e) e.innerHTML = this.prepView(); },
+    pick(k, v){ const s = this.s; s[k] = v; s.seq = []; s.msg = ''; this.refreshPrep(); },
+    step(id){ this.s.msg = this.tryStep(id); this.refreshPrep(); },
+    restart(){ this.s.seq = []; this.s.msg = ''; this.refreshPrep(); },
+
+    // ================= المرحلة 1: تحت المجهر =================
+    preset(){
+      const s = this.s;
+      if (s.view) return s.view;
+      if (this.complete()) return s.sample === 'cheek' ? 'cheek-mb' : (s.seq.indexOf('o7') >= 0 ? 'onion-iodine' : 'onion-water');
+      return 'onion-iodine';
+    },
+    poly(cx, cy, r, n, rr){ let d = ''; for (let i = 0; i < n; i++) { const a = i / n * 6.283 + rr() * 0.4, k = r * (0.8 + rr() * 0.35); d += (i ? 'L' : 'M') + (cx + Math.cos(a) * k).toFixed(1) + ',' + (cy + Math.sin(a) * k).toFixed(1); } return d + 'z'; },
+    fieldContent(v, hi){
+      const rr = rng(hi ? 91 : 17), on = v.indexOf('onion') === 0, iod = v === 'onion-iodine', mb = v === 'cheek-mb';
+      let o = '';
+      if (on) {
+        const wall = iod ? '#d9b443' : '#b9b9a6', nuc = iod ? '#ecd06a' : '#e2e2d6', nucS = iod ? '#c9a227' : '#c4c4b4', bg = iod ? '#fbf5df' : '#f8f8f3';
+        o += `<rect x="30" y="0" width="420" height="400" fill="${bg}"/>`;
+        const ch = hi ? 92 : 28, cw = hi ? 270 : 82;
+        for (let row = -1; row * ch < 420; row++) for (let c = -1; c * cw < 480; c++) {
+          const x = 30 + c * cw + (row % 2 ? cw / 2 : 0) + (rr() - 0.5) * (hi ? 10 : 4), y = row * ch + 10, w = cw - 2, h = ch - 2;
+          o += `<rect x="${x.toFixed(1)}" y="${y}" width="${w}" height="${h}" fill="none" stroke="${wall}" stroke-width="${hi ? 2 : 1.3}"/><rect x="${(x + (hi ? 4 : 2)).toFixed(1)}" y="${y + (hi ? 4 : 2)}" width="${w - (hi ? 8 : 4)}" height="${h - (hi ? 8 : 4)}" fill="none" stroke="${wall}" stroke-width="${hi ? 1.5 : 1}"/>`;
+          const nx = x + w * (0.2 + rr() * 0.6), ny = y + h * (0.35 + rr() * 0.3);
+          o += `<ellipse cx="${nx.toFixed(1)}" cy="${ny.toFixed(1)}" rx="${hi ? 17 : 5}" ry="${hi ? 13 : 4}" fill="${nuc}" stroke="${nucS}" stroke-width="${hi ? 1.5 : 0.8}"/>`;
+          if (hi) o += `<circle cx="${(nx + 4).toFixed(1)}" cy="${(ny - 2).toFixed(1)}" r="4" fill="${nucS}" opacity="0.7"/>` + Array.from({ length: 10 }, () => `<circle cx="${(x + 10 + rr() * (w - 20)).toFixed(1)}" cy="${(y + 10 + rr() * (h - 20)).toFixed(1)}" r="1.4" fill="${wall}" opacity="0.6"/>`).join('');
+          if (iod && rr() < 0.25) for (let k = 0; k < (hi ? 4 : 2); k++) o += `<circle cx="${(x + 8 + rr() * (w - 16)).toFixed(1)}" cy="${(y + 6 + rr() * (h - 12)).toFixed(1)}" r="${hi ? 3 : 1.6}" fill="#1a237e"/>`;
+        }
+      } else {
+        const fill = mb ? '#d4e3f6' : '#f6f6f6', st = mb ? '#7fa7d6' : '#e9e9e9', nuc = mb ? '#1f4e9c' : '#ececec', bg = mb ? '#f4f8fc' : '#fbfbfb';
+        o += `<rect x="30" y="0" width="420" height="400" fill="${bg}"/>`;
+        const cells = hi ? [[170, 150, 92], [330, 210, 88], [210, 320, 80], [380, 70, 70]] : Array.from({ length: 34 }, (_, i) => [50 + (i % 6) * 66 + rr() * 30, 30 + Math.floor(i / 6) * 64 + rr() * 30, 17 + rr() * 6]);
+        cells.forEach(c => {
+          o += `<path d="${this.poly(c[0], c[1], c[2], 9, rr)}" fill="${fill}" stroke="${st}" stroke-width="${hi ? 2 : 1}" opacity="0.92"/>`;
+          o += `<circle cx="${(c[0] + (rr() - 0.5) * c[2] * 0.3).toFixed(1)}" cy="${(c[1] + (rr() - 0.5) * c[2] * 0.3).toFixed(1)}" r="${(c[2] * 0.14).toFixed(1)}" fill="${nuc}"/>`;
+          if (hi && mb) for (let k = 0; k < 12; k++) { const a = rr() * 6.28, d = rr() * c[2] * 0.7; o += `<circle cx="${(c[0] + Math.cos(a) * d).toFixed(1)}" cy="${(c[1] + Math.sin(a) * d).toFixed(1)}" r="1.5" fill="#7fa7d6"/>`; }
+        });
+      }
+      return o;
+    },
+    LABELS: {
+      'onion-water': [['#c4c4b4', 'الجدار الخلوي'], ['#e2e2d6', 'النواة'], ['#f8f8f3', 'السيتوبلازم']],
+      'onion-iodine': [['#d9b443', 'الجدار الخلوي: أصفر فاتح'], ['#ecd06a', 'النواة: أصفر فاتح'], ['#1a237e', 'حُبيبات النشا: أزرق داكن'], ['#fbf5df', 'السيتوبلازم']],
+      'cheek-mb': [['#7fa7d6', 'غشاء سطح الخليّة'], ['#d4e3f6', 'السيتوبلازم'], ['#1f4e9c', 'النواة (الكروماتين مصبوغ بشدة)']],
+      'cheek-none': [['#ececec', 'خلايا شفّافة بالكاد تُرى']]
+    },
+    scopeSvg(){
+      const s = this.s, v = this.preset(), b = this.blur();
+      let o = svgOpen(400, 'g11s_scope') + `<defs><clipPath id="g11s_clip"><circle cx="240" cy="200" r="180"/></clipPath><filter id="g11s_bf" x="-5%" y="-5%" width="110%" height="110%"><feGaussianBlur id="g11s_gb" stdDeviation="${b.toFixed(2)}"/></filter></defs>`;
+      o += `<rect x="44" y="4" width="392" height="392" rx="20" fill="#1c2529"/><g clip-path="url(#g11s_clip)"><g filter="url(#g11s_bf)">${this.fieldContent(v, s.obj)}</g></g><circle cx="240" cy="200" r="180" fill="none" stroke="#000" stroke-width="4"/>`;
+      const head = { 'onion-water':'بشرة البصل — ماء', 'onion-iodine':'بشرة البصل — يود', 'cheek-mb':'بطانة الخدّ — أزرق الميثيلين', 'cheek-none':'بطانة الخدّ — بلا صبغة' }[v];
+      o += T(690, 34, head, { a:'end', fs:18, b:1, c:DARK }) + T(690, 62, s.obj ? 'العدسة الشيئيّة الكبرى' : 'العدسة الشيئيّة الصغرى', { a:'end', fs:17, c:TEAL });
+      o += `<g id="g11s_lab" opacity="${b < 1.5 ? 1 : 0.15}">` + T(690, 104, 'ما يظهر:', { a:'end', fs:17, b:1 });
+      this.LABELS[v].forEach((l, i) => { const y = 136 + i * 34; o += `<rect x="668" y="${y - 16}" width="22" height="22" rx="4" fill="${l[0]}" stroke="#78909c"/>` + T(660, y, l[1], { a:'end', fs:16 }); });
+      o += '</g>' + `<text id="g11s_fs" x="690" y="380" font-size="17" text-anchor="start" direction="rtl" font-weight="700" fill="${b < 0.6 ? GREEN : RED}">${b < 0.6 ? '✓ الصورة واضحة' : (b < 1.5 ? 'اضبط بالضابط الصغير' : 'الصورة غير واضحة')}</text>`;
+      return o + '</svg>';
+    },
+    quoteFor(v){
+      const s = this.s;
+      let q = {
+        'onion-water': `${Q_CLEAR} — «يجب أن تكون قادرًا على رؤية ما يماثل محتوى الصورة ١-١.» ${src(40, AB)}`,
+        'onion-iodine': `«سيصبغ (يلوّن) اليود أي حُبيبات نشا في خلايا البصل باللون الأزرق الداكن.» ${src(42, AB)} ${Q_STAIN} «أحيانًا يمكن أن تحتوي خلايا البصل على حبيبات نشا، فتصطبغ عندها باللون الأزرق الداكن عند إضافة اليود؛ أمّا إذا لم تكن حبيبات النشا موجودة، فلا تصطبغ.» ${src(83, TG)}`,
+        'cheek-mb': `«ويستخدم محلول أزرق الميثيلين المخفّف لصبغ الخلايا الحيوانيّة، مثل خلايا باطن الخد.» ${src(26)} «خلايا الإنسان في الصورة ١-٣ مصبوغة، والكروماتين في النواة مصبوغ بشدة.» ${src(22)}`,
+        'cheek-none': Q_CLEAR
+      }[v];
+      if (s.obj) q += ` — «والصورة المجهرية الضوئية ١-٣ تبيّن خلايا من بطانة خد الإنسان، والصورة ١-٤ خلايا من ورقة نبات حزازي. وكلاهما مكبّرتان 400 مرة، وهو ما يعادل استخدام العدسة الشيئيّة الكبرى في المجهر الضوئي.» ${src(22)}`;
+      return q;
+    },
+    scopeCtrl(){
+      const s = this.s, v = this.preset();
+      const P = [['onion-water', 'بشرة البصل — ماء'], ['onion-iodine', 'بشرة البصل — يود'], ['cheek-mb', 'بطانة الخدّ — أزرق الميثيلين'], ['cheek-none', 'بطانة الخدّ — بلا صبغة']];
+      return `<div style="${S.ctrl}"><b>الشريحة:</b>${P.map(p => `<button style="${btn(v === p[0])}" onclick="G11SIM_slide.setView('${p[0]}')">${p[1]}</button>`).join('')}</div>` +
+        `<div style="${S.ctrl}"><label><b>العدسة الشيئيّة:</b> الصغرى <input type="range" min="0" max="1" step="1" value="${s.obj}" style="width:70px;accent-color:${TEAL};vertical-align:middle;" oninput="G11SIM_slide.setObj(this.value)"> الكبرى</label>` +
+        `<label><b>الضابط الكبير</b> <input id="g11s_c" type="range" min="0" max="100" value="${s.coarse}" style="${S.rng}" oninput="G11SIM_slide.setFocus('coarse',this.value)"></label>` +
+        `<label><b>الضابط الصغير</b> <input id="g11s_f" type="range" min="-20" max="20" value="${s.fine}" style="${S.rng}" oninput="G11SIM_slide.setFocus('fine',this.value)"></label></div>` +
+        `<div id="g11s_fmsg" style="${S.panel}">${this.focusMsg()}</div><div id="g11s_q" style="${S.panel}">${this.quoteFor(v)}</div>`;
+    },
+    focusMsg(){
+      const s = this.s, b = this.blur();
+      let h = s.fmsg ? warn(s.fmsg) : '';
+      if (!s.obj) h += `«حرّك الضابط الكبير ببطء … توقّف عندما تشاهد القشرة. من المحتمل ألاّ تبدو واضحة. حرّك الضابط الصغير لضبط الصورة إلى أن تتمكّن من رؤية قشرة البصل بوضوح.» ${src(40, AB)}`;
+      else h += `«أدِر العدسات الشيئيّة بلطف إلى أن تصل العدسة الأكبر من الصغرى مباشرة فوق الشريحة. استخدم الضابط الصغير في التركيز على الشريحة.» ${src(41, AB)}`;
+      if (b < 0.6) h += ok('الصورة واضحة الآن: «ارسم ما تراه، وليس ما تعتقد أنه يجب رؤيته.» ' + src(42, AB));
+      return h;
+    },
+    scopeView(){ return `<div id="g11s_svgw">${this.scopeSvg()}</div><div id="g11s_sc">${this.scopeCtrl()}</div>`; },
+    refreshScope(full){ const a = $('g11s_svgw'); if (a) a.innerHTML = this.scopeSvg(); if (full) { const c = $('g11s_sc'); if (c) c.innerHTML = this.scopeCtrl(); } else { const m = $('g11s_fmsg'); if (m) m.innerHTML = this.focusMsg(); } },
+    setView(v){ this.s.view = v; this.s.fmsg = ''; this.refreshScope(true); },
+    setObj(v){
+      const s = this.s, n = parseInt(v, 10) ? 1 : 0;
+      s.fmsg = n && this.blur() > 1.5 ? '«ركّز على قشرة البصل باستخدام العدسة الصغرى (ذات قوة التكبير الأصغر)، كما ورد سابقًا» قبل الانتقال إلى العدسة الأكبر.' : '';
+      s.obj = n; this.refreshScope(true);
+    },
+    setFocus(k, v){
+      const s = this.s; s[k] = parseInt(v, 10) || 0;
+      if (k === 'coarse' && s.obj) s.fmsg = '«مهم: قد يؤدّي تحريك العدسة الشيئيّة نحو الأسفل كثيرًا في بعض المجاهر إلى اصطدامها بالشريحة وكسرها. ويمكن تفادي ذلك عن طريق النظر إلى العدسة الشيئية من الجانب.» ' + src(41, AB) + ' — استخدم الضابط الصغير مع العدسة الكبرى.';
+      else if (k === 'coarse' && s.coarse > 90) s.fmsg = 'العدسة الشيئيّة تكاد تلامس الشريحة — «انظر في العدسة العينيّة مرّة أخرى، وحرّك الضابط الكبير ببطء في الاتجاه الآخر».';
+      else if (k === 'coarse') s.fmsg = '';
+      const b = this.blur(), g = $('g11s_gb'); if (g) g.setAttribute('stdDeviation', b.toFixed(2));
+      const lab = $('g11s_lab'); if (lab) lab.setAttribute('opacity', b < 1.5 ? 1 : 0.15);
+      const fs = $('g11s_fs'); if (fs) { fs.textContent = b < 0.6 ? '✓ الصورة واضحة' : (b < 1.5 ? 'اضبط بالضابط الصغير' : 'الصورة غير واضحة'); fs.setAttribute('fill', b < 0.6 ? GREEN : RED); }
+      const m = $('g11s_fmsg'); if (m) m.innerHTML = this.focusMsg();
+    },
+
+    // ================= المرحلة 2: قيِّم الرسم =================
+    drawingSvg(dr){
+      const s = this.s, chk = s.chk[dr];
+      let o = svgOpen(400, 'g11s_dsvg') + `<rect x="8" y="8" width="684" height="384" fill="#fffef8" stroke="#90a4ae" stroke-width="2" stroke-dasharray="8 5"/>` + T(684, 28, `رسم الطالب (${dr === 'a' ? 'أ' : 'ب'}) — المساحة المتاحة للرسم`, { a:'end', fs:16, c:'#78909c' });
+      o += `<defs><pattern id="g11s_hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="6" stroke="#555" stroke-width="1.6"/></pattern></defs>`;
+      if (dr === 'a') {
+        // صغير، تظليل، جدران بخطٍّ واحد، خطوط مسمَّيات باليد
+        [[290, 180], [330, 180], [370, 180], [310, 210], [350, 210], [390, 210]].forEach((c, i) => {
+          o += `<rect x="${c[0]}" y="${c[1]}" width="40" height="30" fill="url(#g11s_hatch)" opacity="0.55"/><rect x="${c[0]}" y="${c[1]}" width="40" height="30" fill="none" stroke="#333" stroke-width="1.3"/>`;
+          o += `<ellipse cx="${c[0] + 14 + (i % 2) * 10}" cy="${c[1] + 15}" rx="5" ry="4" fill="#fff" stroke="#333" stroke-width="1.2"/>`;
+        });
+        o += `<path d="M205,160 q20,-14 35,4 t30,6 t22,14" fill="none" stroke="#333" stroke-width="1.3"/>` + T(200, 165, 'الجدار الخلوي', { a:'end', fs:17 });
+        o += `<path d="M505,150 q-30,10 -50,0 t-40,22 t-17,9" fill="none" stroke="#333" stroke-width="1.3"/>` + T(512, 155, 'النواة', { a:'start', fs:17 });
+        o += `<path d="M505,280 q-25,-6 -45,-12 t-38,-22" fill="none" stroke="#333" stroke-width="1.3"/>` + T(512, 285, 'السيتوبلازم', { a:'start', fs:17 });
+      } else {
+        // كبير، جدران بخطَّين، لا تظليل، مسطرة — لكن قلم غير حاد، خطوط متقطِّعة ومتداخلة، نواة كبيرة جدّاً، مسمَّيات مائلة فوق الرسم
+        const cells = [[60, 50, 260, 140], [320, 50, 260, 140], [190, 190, 260, 140], [60, 190, 130, 140], [450, 190, 130, 140]];
+        cells.forEach((c, i) => {
+          o += `<rect x="${c[0]}" y="${c[1]}" width="${c[2]}" height="${c[3]}" fill="none" stroke="#666" stroke-width="3.6" stroke-dasharray="70 9 40 7" opacity="0.85"/>`;
+          o += `<rect x="${c[0] + 2.5}" y="${c[1] - 2}" width="${c[2]}" height="${c[3]}" fill="none" stroke="#777" stroke-width="2.4" opacity="0.6" stroke-dasharray="50 12"/>`;
+          o += `<rect x="${c[0] + 9}" y="${c[1] + 9}" width="${c[2] - 18}" height="${c[3] - 18}" fill="none" stroke="#666" stroke-width="3.2" opacity="0.8"/>`;
+          if (c[2] > 200) o += `<ellipse cx="${c[0] + c[2] * 0.45}" cy="${c[1] + c[3] / 2}" rx="${c[3] * 0.42}" ry="${c[3] * 0.33}" fill="none" stroke="#666" stroke-width="3.2"/>`;
+        });
+        o += `<line x1="600" y1="80" x2="575" y2="80" stroke="#333" stroke-width="1.3"/>` + T(608, 86, 'الجدار الخلوي', { a:'start', fs:17 });
+        o += `<line x1="600" y1="150" x2="440" y2="120" stroke="#333" stroke-width="1.3"/>`;
+        o += `<text x="540" y="245" font-size="17" text-anchor="middle" direction="rtl" transform="rotate(-32 540 245)" fill="#333">النواة</text>`;
+        o += `<line x1="610" y1="300" x2="560" y2="290" stroke="#333" stroke-width="1.3"/>` + `<text x="600" y="330" font-size="17" text-anchor="middle" direction="rtl" transform="rotate(-28 600 330)" fill="#333">السيتوبلازم</text>`;
+      }
+      if (chk) Object.keys(SPOTS[dr]).forEach(k => { const p = SPOTS[dr][k]; o += `<circle cx="${p[0]}" cy="${p[1]}" r="15" fill="${RED}" opacity="0.9"/>` + T(p[0], p[1] + 6, AR(+k + 1), { fs:17, b:1, c:'#fff' }); });
+      return o + '</svg>';
+    },
+    critTable(dr){
+      const s = this.s, a = s.ans[dr], chk = s.chk[dr], td = 'border:1px solid #b2dfdb;padding:4px 6px;vertical-align:top;';
+      let h = `<table style="border-collapse:collapse;width:100%;font-size:16px;"><tr><th style="${td}background:#80cbc4;width:42%;">ميزات الرسم ${src(81, TG)}</th><th style="${td}background:#80cbc4;">ما مدى جودة الرسم</th></tr>`;
+      CRIT.forEach((c, i) => {
+        const v = a[i], t = TRUTH[dr][i], good = v === t;
+        h += `<tr><td style="${td}"><b>${AR(i + 1)}.</b> ${c.c}</td><td style="${td}white-space:nowrap;">` +
+          `<button style="${btn(v === true, 'padding:2px 8px;')}" onclick="G11SIM_slide.ans(${i},true)">✓ متحقّق</button> <button style="${btn(v === false, 'padding:2px 8px;' + (v === false ? `background:${RED};border-color:${RED};` : `border-color:${RED};color:${RED};`))}" onclick="G11SIM_slide.ans(${i},false)">✗ غير متحقّق</button></td>`;
+        h += '</tr>';
+        if (chk) h += `<tr><td colspan="2" style="${td}background:${good ? '#f1f8e9' : '#fdecea'};"><b style="color:${good ? GREEN : RED};">${v === null ? 'لم تُقيّم' : (good ? '✓ تقييم صحيح' : '✗ راجع تقييمك')}:</b> ${t ? 'المعيار متحقّق في هذا الرسم.' : 'لم يتحقّق — العلامة ' + AR(i + 1) + ' على الرسم.'} «${c.r}» ${src(c.p, AB)}</td></tr>`;
+      });
+      return h + '</table>';
+    },
+    evalView(){
+      const s = this.s, dr = s.dr, chk = s.chk[dr];
+      let h = `<div style="${S.ctrl}justify-content:center;"><button style="${btn(dr === 'a')}" onclick="G11SIM_slide.setDr('a')">رسم الطالب (أ)</button><button style="${btn(dr === 'b')}" onclick="G11SIM_slide.setDr('b')">رسم الطالب (ب)</button></div>`;
+      h += `<div style="margin-top:6px;">${this.drawingSvg(dr)}</div><div style="${S.panel}">قيّم رسم قشرة البصل بقائمة المعايير: «بهدف تقييم رسوم الطلبة في الجزء 2، يمكنك إعداد قائمة معايير تقييمية تزودهم بها؛ ثم الطلب إليهم تبادل رسومهم بعضهم مع بعض وتقييمها في ضوء قائمة المعايير» ${src(80, TG)}</div>`;
+      h += `<div style="${S.panel}overflow-x:auto;">${this.critTable(dr)}</div>`;
+      const n = s.ans[dr].filter(x => x !== null).length;
+      h += `<div style="${S.ctrl}"><button style="${btn(true, 'font-size:17px;')}" onclick="G11SIM_slide.check()">تحقّق من تقييمي</button><button style="${btn(false)}" onclick="G11SIM_slide.clearEval()">امسح</button><span>أجبت عن ${AR(n)} من ٨</span>` +
+        (chk ? `<b style="color:${this.score(dr) === 8 ? GREEN : RED};">تقييمك صحيح في ${AR(this.score(dr))} من ٨ معايير</b>` : '') + '</div>';
+      if (chk) h += `<div style="${S.panel}">«يميل الكثير من الطلبة إلى تقديم «عمل متقن»، ما يجعلهم ينفذون رسمًا تخطيطيًا مثاليًا لبشرة قشرة البصل، بدلًا من رسم ما يرونه فعلًا.» ${src(82, TG)}</div>`;
+      return h;
+    },
+    refreshEval(){ const e = $('g11s_eval'); if (e) e.innerHTML = this.evalView(); },
+    setDr(d){ this.s.dr = d; this.refreshEval(); },
+    ans(i, v){ const s = this.s; s.ans[s.dr][i] = v; this.refreshEval(); },
+    check(){ this.s.chk[this.s.dr] = true; this.refreshEval(); },
+    clearEval(){ const s = this.s; s.ans[s.dr] = new Array(8).fill(null); s.chk[s.dr] = false; this.refreshEval(); },
+
+    build(i){
+      if (!this.s) this.reset();
+      if (i === 1) return `<div style="${S.wrap}">${this.scopeView()}</div>`;
+      if (i === 2) return `<div style="${S.wrap}"><div id="g11s_eval">${this.evalView()}</div></div>`;
+      return `<div style="${S.wrap}"><div id="g11s_prep">${this.prepView()}</div></div>`;
+    }
+  };
+
+  G.simulations = Object.assign(G.simulations || {}, {
+    g11_slide: {
+      sem:'S1', title:'إعداد شريحة مجهريّة مؤقّتة ورسم الخلايا',
+      stages:['حضِّر الشريحة', 'تحت المجهر', 'قيِّم الرسم'],
+      info:[
+        'إن إعداد الشرائح المؤقّتة أسهل وأسرع من إعداد الشرائح الدائمة، وغالبًا ما تستخدم لفحص العيّنة الحيّة الطازجة التي تحتوي على خلايا حيّة، وفي كلا الحالتَين تصبغ الشرائح والعيّنات قبل وضعها على الشريحة الزجاجيّة. تذكّر الالتزام بالمعايير الصحية عند التعامل مع العينات البيولوجية، وبخاصة العينات الحيوانية. (كتاب الطالب ص ٢٦)',
+        'ويشيع استخدام عدد من الصبغات المؤقّتة، على سبيل المثال: محلول يوديد البوتاسيوم مفيد لعيّنات النبات، فهو يصبغ باللون الأزرق الداكن، ويلوّن النواة والجدار الخلوي باللون الأصفر الفاتح. ويستخدم محلول أزرق الميثيلين المخفّف لصبغ الخلايا الحيوانيّة، مثل خلايا باطن الخد. (كتاب الطالب ص ٢٦)',
+        'ستساعدك مشاهدة العينات بالمجهر الضوئي على فهم التراكيب وتذكّرها. يمكنك تعزيز فهمك عبر استخدام القلم الرصاص لتظهير الرسوم على ورق عادي. تذكّر دائمًا أن ترسم ما تراه، وليس ما تعتقد أنك يجب أن تراه. (كتاب الطالب ص ٢٦)'
+      ],
+      build(i){ return M.build(i); }
+    }
+  });
+})();
