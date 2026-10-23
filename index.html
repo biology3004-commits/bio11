@@ -31,6 +31,7 @@
 <script src="data/g11_sims_u2.js"></script>
 <script src="data/g11_sims_u3.js"></script>
 <script src="data/g11_sims_u4.js"></script>
+<script src="data/g11_diagrams.js"></script>
 <script src="data/g11_content.js"></script>
 <script src="data/g11_labs.js"></script>
 <!-- Google tag (gtag.js) -->
@@ -3513,7 +3514,7 @@ body :not(.header *)[style*="font-size:0.74rem"] { font-size: 0.78rem !important
       });
     })();
     </script>
-    <span id="appVersionTag" dir="ltr" title="تاريخ الإصدار · رقم النشر (يطابق CACHE_VERSION في sw.js)" style="background:#eceff1;color:#37474f;padding:3px 9px;border-radius:6px;font-size:0.68rem;font-weight:600;">v2026.10.24 · 5</span>
+    <span id="appVersionTag" dir="ltr" title="تاريخ الإصدار · رقم النشر (يطابق CACHE_VERSION في sw.js)" style="background:#eceff1;color:#37474f;padding:3px 9px;border-radius:6px;font-size:0.68rem;font-weight:600;">v2026.10.24 · 6</span>
     <span id="streakBadge" title="" style="display:none;background:linear-gradient(135deg,#d84315,#f4511e);color:white;padding:3px 9px;border-radius:6px;font-size:0.7rem;font-weight:700;align-items:center;gap:5px;cursor:pointer;box-shadow:0 2px 6px rgba(216,67,21,0.3);" onclick="document.querySelector('.nav-tab[data-tab=&quot;assistant&quot;]').click(); setTimeout(() => kbAskChip('تحدِّي اليوم'), 200);">
       <span style="font-size:0.85rem;line-height:1;">🔥</span>
       <span class="streak-value">0</span>
@@ -15603,7 +15604,7 @@ function buildFormativeGames(lesson, objectives) {
         <div>
           <div style="font-weight:700;font-size:0.78rem;color:#4a148c;margin-bottom:6px;text-align:center;">التعريف</div>
           ${shuffledDefs.map((t, i) => `<div style="background:white;border-radius:8px;padding:6px 10px;margin-bottom:4px;font-size:0.78rem;border:2px solid #e1bee7;">
-            <span style="font-weight:700;color:#7b1fa2;">${String.fromCharCode(1571 + i)})</span> ${t.def.length > 60 ? t.def.substring(0, 60) + '...' : t.def}
+            <span style="font-weight:700;color:#7b1fa2;">${String.fromCharCode(1571 + i)})</span> ${t.def}
           </div>`).join('')}
         </div>
       </div>
@@ -17763,7 +17764,7 @@ function startMemoryGame(unitFilter) {
         seenTerms.add(nTerm);
         seenDefs.add(t.def);
         // Truncate very long defs to keep cards readable.
-        const def = t.def.length > 110 ? t.def.substring(0, 105) + '…' : t.def;
+        const def = t.def; // G11: نصٌّ كامل
         termPairs.push({ term: t.ar, def, en: t.en || '' });
       });
     });
@@ -17784,7 +17785,7 @@ function startMemoryGame(unitFilter) {
         if (seenTerms.has(nAns) || seenDefs.has(ans) || seenDefs.has(q.q)) return;
         if (!_checkAndAddEn(ans)) return;
         seenTerms.add(nAns); seenDefs.add(ans); seenDefs.add(q.q);
-        qaPool.push({ term: ans, def: q.q.length > 100 ? q.q.substring(0, 95) + '…' : q.q, en: '' });
+        qaPool.push({ term: ans, def: q.q, en: '' });
       });
     });
     // Shuffle Q/A pool so different MCQs surface each game.
@@ -18661,7 +18662,7 @@ function _cwCollectTerms(unitFilter) {
         if (seenNorm.has(norm)) return;
         seenNorm.add(norm);
         // التلميح = تعريف المصطلح مع حجب كلمة الإجابة إن وردت فيه (كانت تظهر في 101 من 192 تلميحاً)
-        const def = t.def.length > 160 ? t.def.substring(0, 155) + '…' : t.def;
+        const def = t.def; // G11: نصٌّ كامل
         const masked = _cwMask(def, norm);
         // مصطلح من أكثر من كلمة: أظهِر بقيَّته حتى يعرف الطالب أيَّ كلمة يكتب
         const termMask = parts.length > 1 ? _cwMask(String(t.ar).replace(/\([^)]*\)/g, '').trim(), norm) : '';
