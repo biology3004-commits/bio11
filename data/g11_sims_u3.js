@@ -462,3 +462,702 @@ ${questionsHtml('inv_3_3_enzyme_conc', 'أسئلة الاستقصاء ٣-٣ (ك�
     }
   });
 })();
+
+// ═══════════════════════════════════════════════════════════════════════
+// محاكيات الدروس ٣-٤ … ٣-٧ (أدوات: يغيِّر الطالب متغيِّراً ويقرأ النتيجة)
+// g11_enzyme_factors : العوامل المؤثِّرة — الأشكال ٣-٧ و٣-٨ و٣-٩ و٣-١٠ (كتاب الطالب ص ١١١–١١٣)
+// g11_vmax_km        : Vmax وKm (نشاط ٣-٢، كتاب الأنشطة ص ٨٨–٨٩) والألفة (الشكل ٣-١٢، سؤال ٥)
+//                      والمثبِّطات (ص ١١٥–١١٦ + سؤال نهاية الوحدة ٩ ص ١٢٣ وإجابته في الدليل ج2 ص ١٦٣)
+// g11_immobilised    : اللاكتيز المثبَّت (ص ١١٧–١١٨ + سؤال نهاية الوحدة ٨ ص ١٢٢) واستقرار البكتينيز
+//                      المثبَّت أثناء التخزين (كتاب الأنشطة ص ١١٣، أسئلة نهاية الوحدة ٣)
+// منحنيات الأشكال رُقمِنت من صور صفحات الكتاب (قراءة تقريبيَّة)؛ ما وُسم «توضيحي» ليس في الكتاب بأرقامه.
+// لا تكرِّر الديوراما enzyme_action / enzyme_inhibitors / immobilised_enzymes (عروض خطوات ثلاثيَّة الأبعاد).
+// ═══════════════════════════════════════════════════════════════════════
+(function () {
+  const G = window.G11_DATA = window.G11_DATA || {};
+
+  // ───────── أدوات رسم (نسخة محلِّيَّة؛ أدوات الكتلة السابقة داخل نطاقها) ─────────
+  const FONT = 'font-family="Tajawal, sans-serif"';
+  const N = s => `<tspan direction="ltr" unicode-bidi="embed">${s}</tspan>`;
+  const T = (x, y, t, o = {}) => `<text x="${x}" y="${y}" text-anchor="${o.a || 'middle'}" font-size="${o.fs || 16}" fill="${o.c || '#263238'}" font-weight="${o.b ? 'bold' : 'normal'}" direction="rtl" ${FONT}${o.id ? ` id="${o.id}"` : ''}${o.tr ? ` transform="${o.tr}"` : ''}>${t}</text>`;
+  const TL = (x, y, t, o = {}) => `<text x="${x}" y="${y}" text-anchor="${o.a || 'middle'}" font-size="${o.fs || 16}" fill="${o.c || '#263238'}" font-weight="${o.b ? 'bold' : 'normal'}" direction="ltr" ${FONT}${o.id ? ` id="${o.id}"` : ''}>${t}</text>`;
+  const SVG = (id, h, inner) => `<svg id="${id}" viewBox="0 0 700 ${h}" style="width:100%;display:block;" xmlns="http://www.w3.org/2000/svg"><rect x="4" y="4" width="692" height="${h - 8}" rx="16" fill="#f7fbfa" stroke="#b2dfdb" stroke-width="2"/>${inner}</svg>`;
+  const CTRL = 'direction:rtl;font-family:Tajawal,sans-serif;font-size:16px;display:flex;flex-wrap:wrap;gap:8px 10px;align-items:center;justify-content:center;padding:8px 6px;';
+  const BTN = 'font-family:Tajawal,sans-serif;font-size:16px;padding:6px 12px;border-radius:10px;border:2px solid #00695c;cursor:pointer;';
+  const btnStyle = (on, col) => BTN + (on ? `background:${col || '#00695c'};color:#fff;border-color:${col || '#00695c'};` : `background:#fff;color:${col || '#00695c'};border-color:${col || '#00695c'};`);
+  const NOTE = 'direction:rtl;font-family:Tajawal,sans-serif;font-size:16px;line-height:1.8;background:#e0f2f1;border-right:5px solid #00695c;border-radius:10px;padding:8px 12px;margin:6px 8px;color:#003d33;';
+  const WARN = 'direction:rtl;font-family:Tajawal,sans-serif;font-size:16px;line-height:1.8;background:#fff8e1;border-right:5px solid #C8102E;border-radius:10px;padding:8px 12px;margin:6px 8px;color:#4e342e;';
+  const SEL = 'font-family:Tajawal,sans-serif;font-size:16px;padding:4px 8px;border-radius:8px;border:2px solid #00695c;';
+  const RANGE = 'width:240px;max-width:60vw;accent-color:#00695c;vertical-align:middle;';
+  const INP = 'font-family:Tajawal,sans-serif;font-size:16px;width:80px;padding:3px 6px;border-radius:8px;border:2px solid #00695c;direction:ltr;text-align:center;';
+  const TAG = '<span style="background:#fff3e0;color:#e65100;border:1px solid #ffb74d;border-radius:6px;padding:0 6px;font-size:16px;">توضيحي</span>';
+  const L = s => `<span dir="ltr" style="unicode-bidi:isolate;white-space:nowrap">${s}</span>`;
+  const VMX = L('V<sub>max</sub>'), KM = L('K<sub>m</sub>'), HVM = L('½V<sub>max</sub>');
+  const $ = id => document.getElementById(id);
+  const WRAP = h => `<div style="width:100%;max-width:720px;margin:0 auto;">${h}</div>`;
+  const ok = t => `<span style="color:#009A44;font-weight:bold;">✓ ${t}</span>`;
+  const no = t => `<span style="color:#C8102E;font-weight:bold;">✗ ${t}</span>`;
+  const cross = (x, y, c, r = 5) => `<line x1="${x - r}" y1="${y - r}" x2="${x + r}" y2="${y + r}" stroke="${c}" stroke-width="2.4"/><line x1="${x - r}" y1="${y + r}" x2="${x + r}" y2="${y - r}" stroke="${c}" stroke-width="2.4"/>`;
+  // مسار دالَّة (stroke عبر style حتى لا يضيف زرُّ الأنيميشن نقاطاً جارية عليه)
+  const fpath = (f, t0, t1, X, Y, c, w, dash, op) => {
+    let d = '';
+    for (let k = 0; k <= 120; k++) { const t = t0 + (t1 - t0) * k / 120; d += (k ? 'L' : 'M') + X(t).toFixed(1) + ' ' + Y(f(t)).toFixed(1); }
+    return `<path d="${d}" fill="none" style="stroke:${c};stroke-width:${w || 2.5};${dash ? 'stroke-dasharray:' + dash + ';' : ''}${op != null ? 'opacity:' + op + ';' : ''}"/>`;
+  };
+  const dline = (x1, y1, x2, y2, c, w, dash) => `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="${c}" stroke-width="${w || 2}"${dash ? ` stroke-dasharray="${dash}"` : ''}/>`;
+  // استيفاء تكعيبي رتيب (Fritsch–Carlson): يمرُّ بالنقاط تماماً ولا يتجاوزها (قمَّة المنحنى تبقى في مكانها)
+  function mono(xs, ys) {
+    const n = xs.length, d = [], m = [];
+    for (let i = 0; i < n - 1; i++) d.push((ys[i + 1] - ys[i]) / (xs[i + 1] - xs[i]));
+    m[0] = d[0]; m[n - 1] = d[n - 2];
+    for (let i = 1; i < n - 1; i++) m[i] = d[i - 1] * d[i] <= 0 ? 0 : (d[i - 1] + d[i]) / 2;
+    for (let i = 0; i < n - 1; i++) {
+      if (d[i] === 0) { m[i] = 0; m[i + 1] = 0; continue; }
+      const a = m[i] / d[i], b = m[i + 1] / d[i], s = a * a + b * b;
+      if (s > 9) { const t = 3 / Math.sqrt(s); m[i] = t * a * d[i]; m[i + 1] = t * b * d[i]; }
+    }
+    return x => {
+      if (x <= xs[0]) return ys[0]; if (x >= xs[n - 1]) return ys[n - 1];
+      let i = 0; while (x > xs[i + 1]) i++;
+      const h = xs[i + 1] - xs[i], t = (x - xs[i]) / h, t2 = t * t, t3 = t2 * t;
+      return (2 * t3 - 3 * t2 + 1) * ys[i] + (t3 - 2 * t2 + t) * h * m[i] + (-2 * t3 + 3 * t2) * ys[i + 1] + (t3 - t2) * h * m[i + 1];
+    };
+  }
+  // إطار تمثيل بياني: o = {id,x0,y0,w,h,xmin,xmax,ymin,ymax,gx,gy,xl:[[v,label]],yl:[[v,label]],xt,yt,ytx,bg}
+  function frame(o) {
+    const ymin = o.ymin || 0;
+    const X = v => o.x0 + (v - o.xmin) / (o.xmax - o.xmin) * o.w, Y = v => o.y0 - (v - ymin) / (o.ymax - ymin) * o.h;
+    let s = '';
+    if (o.bg === 'blue') s += `<defs><linearGradient id="${o.id}_g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#bcd5ee"/><stop offset="1" stop-color="#e3edf5"/></linearGradient></defs><rect x="${o.x0}" y="${o.y0 - o.h}" width="${o.w}" height="${o.h}" fill="url(#${o.id}_g)"/>`;
+    else s += `<rect x="${o.x0}" y="${o.y0 - o.h}" width="${o.w}" height="${o.h}" fill="#fff"/>`;
+    const gc = o.bg === 'blue' ? '#cfe0f0' : '#e0eeec';
+    (o.gx || []).forEach(v => s += `<line x1="${X(v)}" y1="${o.y0}" x2="${X(v)}" y2="${o.y0 - o.h}" stroke="${gc}" stroke-width="1"/>`);
+    (o.gy || []).forEach(v => s += `<line x1="${o.x0}" y1="${Y(v)}" x2="${o.x0 + o.w}" y2="${Y(v)}" stroke="${gc}" stroke-width="1"/>`);
+    s += `<line x1="${o.x0}" y1="${o.y0}" x2="${o.x0 + o.w + 6}" y2="${o.y0}" stroke="#37474f" stroke-width="2.2"/><line x1="${o.x0}" y1="${o.y0}" x2="${o.x0}" y2="${o.y0 - o.h - 6}" stroke="#37474f" stroke-width="2.2"/>`;
+    s += `<path d="M${o.x0 + o.w + 12} ${o.y0} l-8 -5 v10 z" fill="#37474f"/><path d="M${o.x0} ${o.y0 - o.h - 12} l-5 8 h10 z" fill="#37474f"/>`;
+    (o.xl || []).forEach(([v, l]) => s += `<line x1="${X(v)}" y1="${o.y0}" x2="${X(v)}" y2="${o.y0 + 5}" stroke="#37474f" stroke-width="1.6"/>` + TL(X(v), o.y0 + 21, l));
+    (o.yl || []).forEach(([v, l]) => s += `<line x1="${o.x0 - 5}" y1="${Y(v)}" x2="${o.x0}" y2="${Y(v)}" stroke="#37474f" stroke-width="1.6"/>` + TL(o.x0 - 8, Y(v) + 5, l, { a: 'end' }));
+    if (o.xt) s += T(o.x0 + o.w / 2, o.xty || (o.y0 + (o.xl && o.xl.length ? 44 : 26)), o.xt, { c: '#003d33', b: 1 });
+    if (o.yt) { const yx = o.ytx || (o.x0 - 40), yy = o.y0 - o.h / 2; s += T(yx, yy, o.yt, { c: '#003d33', b: 1, tr: `rotate(-90 ${yx} ${yy})` }); }
+    return { s, X, Y, o };
+  }
+  const range = (a, b, st) => { const r = []; for (let v = a; v <= b + 1e-9; v += st) r.push(+v.toFixed(6)); return r; };
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // ١) g11_enzyme_factors — العوامل المؤثِّرة في عمل الإنزيم (الدرس ٣-٤)
+  // ═══════════════════════════════════════════════════════════════════════
+  // الشكل ٣-٧ (ص ١١١): رُقمِن من صورة الصفحة — القمَّة عند 40 °C، والمنحنى يبلغ الصفر عند ≈ 55 °C (معدل نسبي 0–1)
+  const TEMP_X = [0, 5, 10, 15, 20, 25, 30, 32, 34, 36, 38, 40, 42, 44, 46, 48, 50, 52, 54, 55.5, 60];
+  const TEMP_Y = [0.017, 0.044, 0.093, 0.167, 0.27, 0.42, 0.614, 0.714, 0.831, 0.946, 0.991, 1, 0.983, 0.923, 0.811, 0.682, 0.534, 0.366, 0.169, 0, 0];
+  // الشكل ٣-٨ (ص ١١١): القمَّة عند pH 7، والمنحنى بين ≈ 3 و≈ 11
+  const PH_X = [1, 3, 3.5, 4, 4.5, 5, 5.5, 6, 6.5, 7, 7.5, 8, 8.5, 9, 9.5, 10, 10.5, 11, 13];
+  const PH_Y = [0, 0, 0.011, 0.043, 0.117, 0.272, 0.605, 0.85, 0.969, 1, 0.969, 0.85, 0.605, 0.272, 0.117, 0.043, 0.011, 0, 0];
+  // الشكل ٣-١٠ (ص ١١٣): المعدل الأوَّلي ÷ Vmax مقابل تركيز المادة المتفاعلة (المحور بلا أرقام في الكتاب: 0–1)
+  const SUB_X = range(0, 1, 0.05);
+  const SUB_Y = [0, 0.119, 0.218, 0.308, 0.397, 0.479, 0.553, 0.621, 0.68, 0.734, 0.783, 0.824, 0.86, 0.89, 0.915, 0.937, 0.954, 0.968, 0.978, 0.985, 0.989];
+  // الشكل ٣-٩أ (ص ١١٢): حجم الأكسجين (mL) كلَّ 30 s لكلِّ حجم من مستخلص الكرفس — قراءة من الشكل؛
+  // نقطة 30 s مأخوذة بحيث تطابق المعدلات المرسومة في الشكل ٣-٩ب: 1.1، 1.8، 3.4، 5.4، 7.0 mL O2 min⁻¹
+  const EC_T = [0, 30, 60, 90, 120, 150, 180, 210, 240];
+  const EC_V = [0.5, 1, 2, 3, 4];
+  const EC_D = {
+    0.5: [0, 0.55, 0.9, 1.15, 1.7, 1.9, 2.17, 2.4, 2.55],
+    1: [0, 0.9, 1.73, 2.43, 3.0, 3.67, 4.2, 4.7, 5.1],
+    2: [0, 1.7, 2.92, 4.0, 4.9, 5.7, 6.5, 7.1, 7.6],
+    3: [0, 2.7, 4.4, 5.7, 6.68, 7.5, 8.18, 8.7, 9.0],
+    4: [0, 3.5, 5.37, 6.8, 7.85, 8.7, 9.3, 9.65, 9.9]
+  };
+  const EC_COL = { 0.5: '#e0589b', 1: '#7468b0', 2: '#e31e24', 3: '#f5a623', 4: '#78909c' };
+  const fTemp = mono(TEMP_X, TEMP_Y), fPH = mono(PH_X, PH_Y), fSub = mono(SUB_X, SUB_Y);
+  const fEC = {}; EC_V.forEach(v => fEC[v] = mono(EC_T, EC_D[v]));
+  const ecRate = v => +(EC_D[v][1] / 30 * 60).toFixed(2);          // المعدل في أوَّل 30 s بوحدة mL O2 min⁻¹
+  const ecSlope = () => { let a = 0, b = 0; EC_V.forEach(v => { a += v * ecRate(v); b += v * v; }); return a / b; }; // خطٌّ مستقيم يمرُّ بنقطة الأصل
+
+  const fmtT = x => `${x} °C`, fmtPH = x => `pH ${(+x).toFixed(1)}`;
+  const CURVE_CFG = [
+    { // درجة الحرارة
+      f: fTemp, xmin: 0, xmax: 60, step: 1, def: 25, fmt: fmtT, lab: 'درجة الحرارة',
+      title: `الشكل ٣-٧ تأثير درجة الحرارة على تفاعل يتحكم به الإنزيم`,
+      xl: range(0, 60, 10).map(v => [v, String(v)]), gx: range(0, 60, 10), xt: `درجة الحرارة (${N('°C')})`,
+      marks(F) {
+        const X = F.X, Y = F.Y;
+        let s = dline(X(40), F.o.y0, X(40), Y(1), '#37474f', 1.6, '6 5');
+        s += dline(X(43.5), Y(fTemp(43.5)), 508, 92, '#37474f', 1.3) + T(512, 98, 'مسخ الإنزيم', { a: 'end', fs: 16 });
+        s += dline(X(40), F.o.y0 - 2, 508, 250, '#37474f', 1.3) + T(512, 246, 'درجة الحرارة', { a: 'end', fs: 16 }) + T(512, 266, 'المثلى', { a: 'end', fs: 16 });
+        s += dline(X(55.4), F.o.y0 - 2, 508, 300, '#37474f', 1.3) + T(512, 304, 'مسخ الإنزيم', { a: 'end', fs: 16 }) + T(512, 324, 'كليًا', { a: 'end', fs: 16 });
+        return s;
+      },
+      state(x, v) {
+        if (x >= 55.5) return `⛔ <b>مسخ الإنزيم كليًا</b> (الشكل ٣-٧): معدل التفاعل صفر عند هذه الدرجة.`;
+        if (x > 42) return `⚠️ <b>مسخ الإنزيم</b> (الشكل ٣-٧): بعد درجة الحرارة المثلى ينخفض معدل التفاعل بسرعة. «ويتضمن تأثير ارتفاع درجة الحرارة على تغيير طبيعة الإنزيم (مسخ)» (كتاب الطالب ص ١١١).`;
+        if (x >= 38) return `★ <b>درجة الحرارة المثلى</b> (الشكل ٣-٧): أعلى معدل للتفاعل — عند ${L('40 °C')} لهذا الإنزيم النموذجي.`;
+        return `↗ قبل درجة الحرارة المثلى: يزداد معدل التفاعل كلَّما ارتفعت درجة الحرارة (قراءة الشكل ٣-٧).`;
+      }
+    },
+    { // الرقم الهيدروجيني
+      f: fPH, xmin: 0, xmax: 14, step: 0.5, def: 5, fmt: fmtPH, lab: 'الرقم الهيدروجيني',
+      title: `الشكل ٣-٨ تأثير الرقم الهيدروجيني ${N('pH')} على تفاعل يتحكم به الإنزيم`,
+      xl: [1, 3, 5, 7, 9, 11, 13].map(v => [v, String(v)]), gx: [1, 3, 5, 7, 9, 11, 13], xt: N('pH'),
+      marks(F) {
+        const X = F.X, Y = F.Y;
+        let s = dline(X(7), F.o.y0, X(7), Y(1), '#37474f', 1.6, '6 5');
+        s += dline(X(7), F.o.y0 - 2, 508, 200, '#37474f', 1.3) + T(512, 196, 'الرقم الهيدروجيني', { a: 'end', fs: 16 }) + T(512, 216, `${N('pH')} الأمثل`, { a: 'end', fs: 16 });
+        return s;
+      },
+      state(x, v) {
+        const base = ` «يعتمد الرقم الهيدروجيني ${L('pH')} الأمثل على الإنزيم: في هذه الحالة، الرقم الهيدروجيني ${L('pH')} الأمثل هو ${L('7')}.» (كتاب الطالب ص ١١١)`;
+        if (Math.abs(x - 7) < 0.26) return `★ <b>الرقم الهيدروجيني ${L('pH')} الأمثل</b> (الشكل ٣-٨): أعلى معدل للتفاعل.` + base;
+        if (v < 0.02) return `⛔ معدل التفاعل يكاد يكون صفراً عند هذا الرقم الهيدروجيني (قراءة الشكل ٣-٨).` + base;
+        return `↘ كلَّما ابتعد الرقم الهيدروجيني عن قيمته المثلى (أعلى منها أو أقلَّ) انخفض معدل التفاعل (قراءة الشكل ٣-٨).` + base;
+      }
+    }
+  ];
+
+  const EF = window.G11SIM_enzfac = {
+    // ── دوال حساب خالصة (يختبرها سكربت التحقُّق) ──
+    fTemp, fPH, fSub, fEC, ecRate, ecSlope, EC_D, EC_V,
+    s: { 0: 25, 1: 5, ec: { sel: 2, seen: [2], q3: false }, sub: 0.3 },
+    _F: {},
+
+    // ───────── المرحلتان 0 و1: منحنى + منزلق ─────────
+    buildCurve(i) {
+      const c = CURVE_CFG[i];
+      this.s[i] = c.def;
+      const F = this._F[i] = frame({ id: 'g11ef_f' + i, x0: 90, y0: 330, w: 400, h: 262, xmin: c.xmin, xmax: c.xmax, ymax: 1.08, gx: c.gx, xl: c.xl, xt: c.xt, yt: 'معدل التفاعل', ytx: 58, bg: 'blue' });
+      let g = F.s + T(350, 34, c.title, { b: 1, c: '#003d33', fs: 17 });
+      g += fpath(c.f, c.xmin + (i === 1 ? 1 : 0), c.xmax - (i === 1 ? 1 : 0), F.X, F.Y, '#e31e24', 3.4);
+      g += c.marks(F);
+      // مقياس المعدل (عمود)
+      g += `<rect x="636" y="74" width="50" height="256" rx="6" fill="#fff" stroke="#90a4ae" stroke-width="1.6"/>` + T(661, 352, 'معدل', { fs: 16, b: 1, c: '#003d33' }) + T(661, 372, 'التفاعل', { fs: 16, b: 1, c: '#003d33' });
+      g += `<g id="g11ef_dyn">${this.dynCurve(i)}</g>`;
+      return SVG('g11ef_svg', 392, g) + `
+<div style="${CTRL}"><label>${c.lab}: <input type="range" min="${c.xmin + (i === 1 ? 1 : 0)}" max="${c.xmax - (i === 1 ? 1 : 0)}" step="${c.step}" value="${c.def}" style="${RANGE}" oninput="G11SIM_enzfac.setCurve(${i},this.value)"></label>
+<b id="g11ef_val" style="font-size:18px;color:#003d33;">${L(c.fmt(c.def))}</b></div>
+<div id="g11ef_read" style="${CTRL}font-size:17px;color:#003d33;">${this.readCurve(i)}</div>
+<div id="g11ef_state" style="${NOTE}">${c.state(c.def, c.f(c.def))}</div>
+<div style="${NOTE}font-size:15px;">حرِّك المنزلق على المحور الأفقي، وراقب موضع النقطة على المنحنى وطول عمود «معدل التفاعل». المنحنى منقول عن شكل الكتاب، والنسبة المئويَّة قراءة تقريبيَّة من ارتفاع المنحنى (المحور الرأسي في الكتاب بلا أرقام).</div>`;
+    },
+    dynCurve(i) {
+      const c = CURVE_CFG[i], F = this._F[i], x = this.s[i], v = Math.max(0, c.f(x));
+      const px = F.X(x), py = F.Y(v), bh = 250 * v;
+      return dline(px, F.o.y0, px, py, '#00695c', 2, '5 4') + dline(F.o.x0, py, px, py, '#00695c', 2, '5 4') +
+        `<circle cx="${px.toFixed(1)}" cy="${py.toFixed(1)}" r="8" fill="#009A44" stroke="#fff" stroke-width="2.5"/>` +
+        `<rect x="640" y="${(327 - bh).toFixed(1)}" width="42" height="${bh.toFixed(1)}" fill="${v > 0.95 ? '#009A44' : v < 0.05 ? '#C8102E' : '#26a69a'}"/>` +
+        TL(661, Math.max(96, 320 - bh), `${Math.round(v * 100)}%`, { b: 1, c: '#003d33', fs: 17 });
+    },
+    readCurve(i) {
+      const c = CURVE_CFG[i], x = this.s[i], v = Math.max(0, c.f(x));
+      return `معدل التفاعل ≈ <b>${L(Math.round(v * 100) + '%')}</b> من أعلى قيمة في المنحنى`;
+    },
+    setCurve(i, val) {
+      this.s[i] = +val; const c = CURVE_CFG[i], v = Math.max(0, c.f(+val));
+      if ($('g11ef_dyn')) $('g11ef_dyn').innerHTML = this.dynCurve(i);
+      if ($('g11ef_val')) $('g11ef_val').innerHTML = L(c.fmt(+val));
+      if ($('g11ef_read')) $('g11ef_read').innerHTML = this.readCurve(i);
+      if ($('g11ef_state')) $('g11ef_state').innerHTML = c.state(+val, v);
+    },
+
+    // ───────── المرحلة 2: تركيز الإنزيم (الشكل ٣-٩ أ/ب) ─────────
+    buildEC() {
+      this.s.ec = { sel: 2, seen: [2], q3: false };
+      const A = this._A = frame({ id: 'g11ef_a', x0: 400, y0: 330, w: 236, h: 250, xmin: 0, xmax: 240, ymax: 10, gx: range(0, 240, 30), gy: range(0, 10, 1), xl: [0, 60, 120, 180, 240].map(v => [v, String(v)]), yl: range(0, 10, 2).map(v => [v, String(v)]), xt: `الزمن (${N('s')})`, yt: `حجم الأكسجين المتجمِّع (${N('mL')})`, ytx: 360 });
+      const B = this._B = frame({ id: 'g11ef_b', x0: 78, y0: 330, w: 236, h: 250, xmin: 0, xmax: 4, ymax: 8, gx: range(0, 4, 0.5), gy: range(0, 8, 1), xl: [0, 1, 2, 3, 4].map(v => [v, v.toFixed(1)]), yl: range(0, 8, 1).map(v => [v, String(v)]), xt: `تركيز الإنزيم (${N('mL')} من مستخلص الكرفس)`, yt: `المعدل الأولي (${N('mL O<tspan font-size="12" baseline-shift="sub">2</tspan> min<tspan font-size="12" baseline-shift="super">−1</tspan>')})`, ytx: 36 });
+      let g = A.s + B.s + T(518, 44, '(أ)', { b: 1, fs: 18 }) + T(196, 44, '(ب)', { b: 1, fs: 18 });
+      g += `<g id="g11ef_dyn">${this.dynEC()}</g>`;
+      return SVG('g11ef_svg', 392, g) + `
+<div style="${CTRL}"><span>حجم مستخلص الكرفس (الإنزيم):</span>${EC_V.map(v => `<button id="g11ef_b${String(v).replace('.', '_')}" style="${btnStyle(v === 2, EC_COL[v] === '#f5a623' ? '#e65100' : EC_COL[v])}" onclick="G11SIM_enzfac.pickEC(${v})">${L(v.toFixed(1) + ' mL')}</button>`).join('')}
+<button style="${btnStyle(false)}" onclick="G11SIM_enzfac.allEC()">⏭ التجارب الخمس</button></div>
+<div id="g11ef_read" style="${NOTE}">${this.readEC()}</div>
+<div style="${CTRL}"><label style="cursor:pointer;"><input type="checkbox" onchange="G11SIM_enzfac.q3(this.checked)" style="width:18px;height:18px;vertical-align:middle;"> السؤال ٣: لو لم يتوافر فائض من بيروكسيد الهيدروجين؟</label></div>
+<div id="g11ef_q3" style="${WARN}display:none;">«ارسم رسمًا يبيّن التمثيل البياني في الشكل ٣-٩ب فيما لو لم يتوافر فائض من بيروكسيد الهيدروجين.» (كتاب الطالب ص ١١٣)<br><b>إجابة الدليل:</b> «إذا أصبح تركيز المادة المتفاعلة (بيروكسيد الهيدروجين) محدودًا، فإن إضافة المزيد من الإنزيم لن تزيد من معدل التفاعل.» (دليل المعلِّم ج2 ص ١٦١) — المنحنى المتقطِّع ${TAG}: موضع استوائه ليس من الكتاب.</div>`;
+    },
+    dynEC() {
+      const A = this._A, B = this._B, s = this.s.ec;
+      let g = '';
+      // (أ) المنحنيات الخمسة: المختار عريض، والباقي باهت
+      EC_V.forEach(v => {
+        const on = v === s.sel;
+        g += fpath(fEC[v], 0, 240, A.X, A.Y, EC_COL[v], on ? 4 : 2.2, null, on ? 1 : 0.35);
+        g += TL(A.X(240) + 4, A.Y(EC_D[v][8]) + 5, v.toFixed(1), { a: 'start', fs: 16, c: on ? '#003d33' : '#90a4ae', b: on });
+        if (on) EC_T.slice(1).forEach((t, k) => g += cross(A.X(t), A.Y(EC_D[v][k + 1]), '#212121', 4));
+      });
+      const v30 = EC_D[s.sel][1];
+      g += dline(A.X(0), A.Y(0), A.X(30), A.Y(v30), '#003d33', 3.2) + `<circle cx="${A.X(30)}" cy="${A.Y(v30)}" r="6" fill="none" stroke="#003d33" stroke-width="2.4"/>`;
+      g += T(A.X(30) + 6, A.Y(v30) - 12, `أوَّل ${N('30 s')}`, { a: 'end', fs: 16, b: 1, c: '#003d33' });
+      // (ب) نقاط المعدل الأوَّلي
+      if (s.seen.length === EC_V.length) {
+        const k = ecSlope();
+        g += dline(B.X(0), B.Y(0), B.X(4), B.Y(4 * k), '#6d7a32', 3.2);
+      }
+      if (s.q3) g += fpath(x => 4.3 * Math.tanh(ecSlope() * x / 4.3), 0, 4, B.X, B.Y, '#C8102E', 2.6, '8 6');
+      s.seen.forEach(v => { g += cross(B.X(v), B.Y(ecRate(v)), EC_COL[v], 6); });
+      g += `<circle cx="${B.X(s.sel)}" cy="${B.Y(ecRate(s.sel))}" r="10" fill="none" stroke="#003d33" stroke-width="2.2"/>`;
+      return g;
+    },
+    readEC() {
+      const s = this.s.ec, v30 = EC_D[s.sel][1], r = ecRate(s.sel);
+      let h = `<b>${L(s.sel.toFixed(1) + ' mL')}</b> من مستخلص الكرفس: حجم الأكسجين بعد ${L('30 s')} = <b>${L(v30 + ' mL')}</b> ← المعدل الأولي = ${L(`${v30} ÷ 30 × 60 = ${r.toFixed(1)}`)} ${L('mL O<sub>2</sub> min<sup>−1</sup>')}`;
+      h += `<br><span style="font-size:15px;">«بإمكاننا حساب ميل المنحنى بعد 30 ثانية من بدء التفاعل لحساب المعدل الأولي للتفاعل لتركيز كل إنزيم.» (كتاب الطالب ص ١١٢) — القراءات من الشكل ٣-٩ تقريبيَّة.</span>`;
+      if (s.seen.length === EC_V.length) h += `<div style="margin-top:6px;">${ok('اكتملت النقاط الخمس')} «يبيّن هذا التمثيل البياني أن المعدل الأولي للتفاعل يزداد خطيًا. وفي هذه الظروف، يتناسب معدل التفاعل طرديًا مع تركيز الإنزيم.» (كتاب الطالب ص ١١٣)</div>`;
+      else h += `<div style="margin-top:6px;font-size:15px;">جرِّب الأحجام الخمسة لتكتمل نقاط الشكل (ب) (${L(s.seen.length + '/5')}).</div>`;
+      return h;
+    },
+    pickEC(v) {
+      const s = this.s.ec; s.sel = v; if (s.seen.indexOf(v) < 0) s.seen.push(v);
+      EC_V.forEach(w => { const b = $('g11ef_b' + String(w).replace('.', '_')); if (b) b.setAttribute('style', btnStyle(w === v, EC_COL[w] === '#f5a623' ? '#e65100' : EC_COL[w])); });
+      this.refreshEC();
+    },
+    allEC() { this.s.ec.seen = EC_V.slice(); this.refreshEC(); },
+    q3(on) { this.s.ec.q3 = !!on; if ($('g11ef_q3')) $('g11ef_q3').style.display = on ? 'block' : 'none'; this.refreshEC(); },
+    refreshEC() { if ($('g11ef_dyn')) $('g11ef_dyn').innerHTML = this.dynEC(); if ($('g11ef_read')) $('g11ef_read').innerHTML = this.readEC(); },
+
+    // ───────── المرحلة 3: تركيز المادة المتفاعلة (الشكل ٣-١٠) ─────────
+    buildSub() {
+      this.s.sub = 0.3;
+      const F = this._S = frame({ id: 'g11ef_s', x0: 90, y0: 330, w: 380, h: 262, xmin: 0, xmax: 1, ymax: 1.08, xt: 'تركيز المادة المتفاعلة', yt: 'المعدل الأولي للتفاعل', ytx: 58, bg: 'blue' });
+      let g = F.s + T(280, 34, 'الشكل ٣-١٠ تأثير تركيز المادة المتفاعلة على معدل تفاعل محفز بالإنزيم', { b: 1, c: '#003d33', fs: 16 });
+      g += dline(F.X(0), F.Y(1), F.X(1), F.Y(1), '#212121', 2.2, '9 6') + TL(F.o.x0 - 8, F.Y(1) + 5, 'V<tspan font-size="12" baseline-shift="sub">max</tspan>', { a: 'end', b: 1 });
+      g += fpath(fSub, 0, 1, F.X, F.Y, '#e31e24', 3.4);
+      g += `<rect x="492" y="52" width="196" height="306" rx="14" fill="#fff" stroke="#b2dfdb" stroke-width="1.6"/>` + T(590, 76, 'المواقع النشطة', { b: 1, c: '#003d33' }) + T(590, 96, '(توضيحي)', { c: '#e65100', fs: 16 });
+      g += `<g id="g11ef_dyn">${this.dynSub()}</g>`;
+      return SVG('g11ef_svg', 392, g) + `
+<div style="${CTRL}"><label>تركيز المادة المتفاعلة: <input type="range" min="0" max="1" step="0.02" value="0.3" style="${RANGE}" oninput="G11SIM_enzfac.setSub(this.value)"></label></div>
+<div id="g11ef_read" style="${CTRL}font-size:17px;color:#003d33;">${this.readSub()}</div>
+<div id="g11ef_state" style="${NOTE}">${this.stateSub()}</div>
+<div style="${NOTE}font-size:15px;">تركيز الإنزيم ثابت. محور التركيز في الشكل ٣-١٠ بلا أرقام؛ والنسبة من ${VMX} قراءة تقريبيَّة من ارتفاع المنحنى. لوحة «المواقع النشطة» ${TAG}: ستَّة جزيئات إنزيم، وعدد المواقع المشغولة يتناسب مع المعدل.</div>`;
+    },
+    dynSub() {
+      const F = this._S, x = this.s.sub, v = fSub(x), px = F.X(x), py = F.Y(v);
+      let g = dline(px, F.o.y0, px, py, '#00695c', 2, '5 4') + dline(F.o.x0, py, px, py, '#00695c', 2, '5 4') + `<circle cx="${px.toFixed(1)}" cy="${py.toFixed(1)}" r="8" fill="#009A44" stroke="#fff" stroke-width="2.5"/>`;
+      // لوحة المواقع النشطة: 6 إنزيمات؛ المشغول = round(6·v)
+      const occ = Math.round(6 * v), tot = Math.round(x * 14), wait = Math.max(0, tot - occ);
+      const pos = [[545, 140], [635, 140], [545, 210], [635, 210], [545, 280], [635, 280]];
+      pos.forEach(([cx, cy], k) => {
+        g += `<path d="M${cx - 30} ${cy - 18} h18 l12 16 l12 -16 h18 v40 q0 8 -8 8 h-44 q-8 0 -8 -8 z" fill="#4a7fc1" stroke="#2c5d99" stroke-width="1.6"/>`;
+        if (k < occ) g += `<path d="M${cx - 11} ${cy - 22} h22 l-11 16 z" fill="#f7a35c" stroke="#d9822b" stroke-width="1.4"/>`;
+      });
+      for (let k = 0; k < Math.min(wait, 8); k++) { const wx = 520 + k * 21; g += `<path d="M${wx - 8} 322 h16 l-8 12 z" fill="#f7a35c" stroke="#d9822b" stroke-width="1.2"/>`; }
+      if (wait > 0 && occ === 6) g += T(590, 352, '«تنتظر»', { fs: 16, b: 1, c: '#C8102E' });
+      return g;
+    },
+    readSub() {
+      const v = fSub(this.s.sub), occ = Math.round(6 * v);
+      return `المعدل الأولي ≈ <b>${L(Math.round(v * 100) + '%')}</b> من ${VMX} · المواقع النشطة المشغولة: <b>${L(occ + ' / 6')}</b>`;
+    },
+    stateSub() {
+      const v = fSub(this.s.sub);
+      if (v >= 0.95) return `★ <b>${VMX}</b>: «مع استمرار زيادة تركيز المادة المتفاعلة، والحفاظ على تركيز الإنزيم ثابتًا، ستمتلئ جميع المواقع النشطة للإنزيم. وإذا أضيف المزيد من المادة المتفاعلة، لا يستطيع الإنزيم ببساطة أن يعمل بسرعة، حيث إن جزيئات المادة المتفاعلة سوف «تنتظر» لترتبط بالموقع النشط. يعمل الإنزيم بالسرعة القصوى الممكنة له، والمسماة ${VMX}» (كتاب الطالب ص ١١٣)`;
+      if (v < 0.01) return `لا توجد مادة متفاعلة: معدل التفاعل صفر.`;
+      return `↗ «يزداد المعدل الأولي للتفاعل أيضًا بازدياد تركيز المادة المتفاعلة، وهو أمر متوقع؛ فكلما ازداد عدد جزيئات المادة المتفاعلة ازداد عدد مرات دخولها إلى المواقع النشطة.» (كتاب الطالب ص ١١٣)`;
+    },
+    setSub(val) {
+      this.s.sub = +val;
+      if ($('g11ef_dyn')) $('g11ef_dyn').innerHTML = this.dynSub();
+      if ($('g11ef_read')) $('g11ef_read').innerHTML = this.readSub();
+      if ($('g11ef_state')) $('g11ef_state').innerHTML = this.stateSub();
+    }
+  };
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // ٢) g11_vmax_km — Vmax وKm والألفة والمثبِّطات (الدرسان ٣-٥ و٣-٦)
+  // ═══════════════════════════════════════════════════════════════════════
+  // نشاط ٣-٢ (كتاب الأنشطة ص ٨٨، الجدول ٣-١): الليبيز من Burkholderia cepacia
+  const LIP_S = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50];
+  const LIP_V = [0, 8, 16, 22, 26, 29, 31, 32, 33, 33, 33];
+  const fLip = mono(LIP_S, LIP_V);
+  const LIP_VMAX = 33;                       // دليل المعلِّم ج2 ص ١٦٤: Vmax = 33 µmol
+  const invLip = y => { let a = 0, b = 50; for (let k = 0; k < 60; k++) { const m = (a + b) / 2; if (fLip(m) < y) a = m; else b = m; } return (a + b) / 2; };
+  // الشكل ٣-١٢: منحنيان بلا أرقام — (أ) يرتفع بحدَّة ويستقرُّ أدنى، (ب) يرتفع أبطأ ويستقرُّ أعلى (إجابات الدليل ج2 ص ١٦١)
+  const AFF = { A: { vm: 0.57, tau: 0.108 }, B: { vm: 1, tau: 0.44 } };
+  const fAff = (e, x) => AFF[e].vm * Math.tanh(x / AFF[e].tau);
+  const kmAff = e => AFF[e].tau * Math.atanh(0.5);
+  // المثبِّطات (سؤال ٩ ص ١٢٣ + الدليل ص ١٦٣): التنافسي لا يغيِّر Vmax ويزيد Km؛ غير التنافسي يخفض Vmax ولا يغيِّر Km.
+  // مقدار الأثر بحسب «تركيز المثبِّط» توضيحي: i = 0.5 / 1 / 2 (القيمة 1 تعيد شكل الكتاب: Vmax غير التنافسي ≈ نصف Vmax).
+  const INH_TAU = 0.3, INH_I = { low: 0.5, mid: 1, high: 2 };
+  const vNone = x => Math.tanh(x / INH_TAU);
+  const vInh = (type, i, x) => type === 'comp' ? Math.tanh(x / (INH_TAU * (1 + i))) : type === 'non' ? Math.tanh(x / INH_TAU) / (1 + i) : vNone(x);
+  const kmInh = (type, i) => (type === 'comp' ? INH_TAU * (1 + i) : INH_TAU) * Math.atanh(0.5);
+  const vmInh = (type, i) => type === 'non' ? 1 / (1 + i) : 1;
+
+  const VK = window.G11SIM_vmaxkm = {
+    fLip, invLip, LIP_S, LIP_V, LIP_VMAX, fAff, kmAff, vNone, vInh, kmInh, vmInh,
+    kmCurve: () => invLip(LIP_VMAX / 2),
+    checkVmax: v => Math.abs(+v - LIP_VMAX) <= 0.5,
+    checkHalf: v => Math.abs(+v - LIP_VMAX / 2) <= 0.1,
+    checkKm: v => +v >= 10 && +v <= 11,          // «عليك إيجاد Km أعلى بقليل من 10%» (الدليل ج2 ص ١٦٤)
+    s: {},
+
+    // ───────── المرحلة 0: قراءة Vmax وKm (نشاط ٣-٢ + الشكل ٣-١١) ─────────
+    build0() {
+      this.s = { vm: 25, vOK: false, hOK: false, kx: 5, kOK: false };
+      const F = this._F = frame({ id: 'g11vk_f', x0: 92, y0: 330, w: 420, h: 262, xmin: 0, xmax: 50, ymax: 40, gx: range(0, 50, 2.5), gy: range(0, 40, 2), xl: range(0, 50, 10).map(v => [v, String(v)]), yl: range(0, 40, 10).map(v => [v, String(v)]), xt: `تركيز المادة المتفاعلة (${N('%')})`, yt: `المعدل الأولي (${N('µmol min<tspan font-size="12" baseline-shift="super">−1</tspan>')})`, ytx: 50 });
+      let g = F.s + T(300, 34, 'الليبيز: المعدل الأولي مقابل تركيز المادة المتفاعلة (نشاط ٣-٢)', { b: 1, c: '#003d33', fs: 17 });
+      g += fpath(fLip, 0, 50, F.X, F.Y, '#263238', 2.6);
+      LIP_S.forEach((x, k) => g += cross(F.X(x), F.Y(LIP_V[k]), '#C8102E', 5));
+      g += `<rect x="540" y="62" width="148" height="190" rx="14" fill="#fff" stroke="#b2dfdb" stroke-width="1.6"/>` + T(614, 88, 'قراءاتك', { b: 1, c: '#003d33' });
+      g += `<g id="g11vk_dyn">${this.dyn0()}</g>`;
+      return SVG('g11vk_svg', 392, g) + `
+<div style="${NOTE}font-size:15px;">«مهم: ارسم بدقّة خطًّا أفقيًّا من أعلى موضع في الخط على التمثيل البياني وصولًا إلى المحور ص لتجد قيمة ${VMX}. اقرأ قيمة V من مقياس المحور ص.» (كتاب الأنشطة ص ٨٩)</div>
+<div style="${CTRL}"><label>① الخط الأفقي (${VMX}): <input type="range" min="20" max="40" step="0.5" value="25" style="${RANGE}" oninput="G11SIM_vmaxkm.setVm(this.value)"></label><b id="g11vk_vmv" dir="ltr">25</b><button style="${btnStyle(false)}" onclick="G11SIM_vmaxkm.chkV()">تحقَّق</button><span id="g11vk_o1"></span></div>
+<div style="${CTRL}"><label>② «حدّد على المحور (ص) من التمثيل البياني القيمة التي تساوي بالضبط نصف قيمة ${VMX}»: ${HVM} = <input id="g11vk_half" type="number" step="0.1" style="${INP}"></label><button style="${btnStyle(false)}" onclick="G11SIM_vmaxkm.chkH()">تحقَّق</button><span id="g11vk_o2"></span></div>
+<div style="${CTRL}"><label>③ «ارسم خطًّا عموديًّا من هذه النقطة على المنحنى وصولًا إلى المحور (س)»: <input type="range" min="0" max="50" step="0.5" value="5" style="${RANGE}" oninput="G11SIM_vmaxkm.setK(this.value)"></label><b id="g11vk_kxv" dir="ltr">5</b></div>
+<div style="${CTRL}"><label>④ «اقرأ القيمة على المحور (س) عند هذه النقطة. هذا هو ${KM}»: ${KM} = <input id="g11vk_km" type="number" step="0.1" style="${INP}"> ${L('%')}</label><button style="${btnStyle(false)}" onclick="G11SIM_vmaxkm.chkK()">تحقَّق</button><span id="g11vk_o3"></span></div>
+<div style="${NOTE}font-size:15px;">البيانات: الجدول ٣-١ «تأثير تركيز المادة المتفاعلة على المعدّل الأولي للتفاعل، V، لإنزيم الليبيز» (كتاب الأنشطة ص ٨٨)، وخطوات القراءة من ص ٨٩. الخط المرسوم عبر النقاط هو «خطّ مناسب» تمرُّ به النقاط.</div>`;
+    },
+    dyn0() {
+      const F = this._F, s = this.s;
+      let g = dline(F.o.x0, F.Y(s.vm), F.o.x0 + F.o.w, F.Y(s.vm), s.vOK ? '#009A44' : '#C8102E', 2.4, '9 6');
+      g += TL(F.X(3), F.Y(s.vm) - 7, 'V<tspan font-size="12" baseline-shift="sub">max</tspan>' + (s.vOK ? '' : '?'), { a: 'start', b: 1, c: s.vOK ? '#009A44' : '#C8102E' });
+      if (s.hOK) {
+        const km = this.kmCurve();
+        g += dline(F.o.x0, F.Y(LIP_VMAX / 2), F.X(km), F.Y(LIP_VMAX / 2), '#00695c', 2.2, '6 5');
+        g += TL(F.o.x0 + 6, F.Y(LIP_VMAX / 2) - 7, '½V<tspan font-size="12" baseline-shift="sub">max</tspan>', { a: 'start', b: 1, c: '#00695c' });
+      }
+      const ky = fLip(s.kx);
+      g += dline(F.X(s.kx), F.o.y0, F.X(s.kx), F.Y(ky), '#6a1b9a', 2.4, '4 4') + `<circle cx="${F.X(s.kx).toFixed(1)}" cy="${F.Y(ky).toFixed(1)}" r="6" fill="#6a1b9a"/>`;
+      if (s.kOK) g += TL(F.X(this.kmCurve()), F.o.y0 - 8, 'K<tspan font-size="12" baseline-shift="sub">m</tspan>', { b: 1, c: '#6a1b9a' });
+      // لوحة القراءات
+      g += TL(614, 120, `Vmax = ${s.vOK ? LIP_VMAX : '?'}`, { b: 1, c: s.vOK ? '#009A44' : '#546e7a' });
+      g += TL(614, 152, `½Vmax = ${s.hOK ? LIP_VMAX / 2 : '?'}`, { b: 1, c: s.hOK ? '#009A44' : '#546e7a' });
+      g += TL(614, 184, s.kOK ? 'Km ≈ 10.4 %' : 'Km = ?', { b: 1, c: s.kOK ? '#009A44' : '#546e7a' });
+      g += TL(614, 226, `V(${s.kx}) = ${ky.toFixed(1)}`, { c: '#6a1b9a' });
+      return g;
+    },
+    redraw0() { if ($('g11vk_dyn')) $('g11vk_dyn').innerHTML = this.dyn0(); },
+    setVm(v) { this.s.vm = +v; if ($('g11vk_vmv')) $('g11vk_vmv').textContent = v; this.redraw0(); },
+    setK(v) { this.s.kx = +v; if ($('g11vk_kxv')) $('g11vk_kxv').textContent = v; this.redraw0(); },
+    chkV() {
+      const o = $('g11vk_o1'); this.s.vOK = this.checkVmax(this.s.vm);
+      if (this.s.vOK) this.s.vm = LIP_VMAX;
+      if (o) o.innerHTML = this.s.vOK ? ok(`${VMX} = ${L('33 µmol')} من الأحماض الدهنيَّة في الدقيقة — «هذه هي القيمة التي تستقر عندها مستويات التمثيل البياني» (دليل المعلِّم ج2 ص ١٦٤)`) : no('ضع الخط عند أعلى موضع يستقرُّ عنده المنحنى (حيث تتساوى القراءات الأخيرة).');
+      this.redraw0();
+    },
+    chkH() {
+      const o = $('g11vk_o2'), v = ($('g11vk_half') || {}).value;
+      if (!this.s.vOK) { if (o) o.innerHTML = no(`حدِّد ${VMX} أوَّلاً (الخطوة ①).`); return; }
+      this.s.hOK = this.checkHalf(v);
+      if (o) o.innerHTML = this.s.hOK ? ok(`${HVM} = ${L('33 ÷ 2 = 16.5')} — «ارسم خطًّا أفقيًّا من هذه النقطة على المحور (ص) إلى أن تصل المنحنى.»`) : no(`نصف ${L('33')} = ؟`);
+      this.redraw0();
+    },
+    chkK() {
+      const o = $('g11vk_o3'), v = ($('g11vk_km') || {}).value;
+      if (!this.s.hOK) { if (o) o.innerHTML = no(`أكمل الخطوة ② أوَّلاً.`); return; }
+      this.s.kOK = this.checkKm(v);
+      if (this.s.kOK) { this.s.kx = Math.round(this.kmCurve() * 2) / 2; }
+      if (o) o.innerHTML = this.s.kOK ? ok(`«عليك إيجاد ${KM} أعلى بقليل من 10% من تركيز المادة المتفاعلة» (دليل المعلِّم ج2 ص ١٦٤) — من الخطِّ المرسوم هنا ≈ ${L(this.kmCurve().toFixed(1) + ' %')}`) : no(`حرِّك الخط العمودي حتى يمرَّ بتقاطع خط ${HVM} مع المنحنى، ثمَّ اقرأ المحور (س).`);
+      this.redraw0();
+    },
+
+    // ───────── المرحلة 1: مقارنة الألفة (الشكل ٣-١٢، السؤال ٥) ─────────
+    build1() {
+      this.s = { x: 0.15, lab: false, km: false };
+      const F = this._F = frame({ id: 'g11vk_f', x0: 92, y0: 330, w: 410, h: 262, xmin: 0, xmax: 1, ymax: 1.1, xty: 380, xt: 'تركيز المادة المتفاعلة', yt: 'معدل التفاعل', ytx: 58 });
+      let g = F.s + T(300, 34, 'الشكل ٣-١٢ مقارنة بين ألفة إنزيمَين مختلفَين لمادتيهما المتفاعلتَين', { b: 1, c: '#003d33', fs: 17 });
+      g += fpath(x => fAff('A', x), 0, 1, F.X, F.Y, '#1565c0', 3) + fpath(x => fAff('B', x), 0, 1, F.X, F.Y, '#e65100', 3);
+      g += `<rect x="530" y="62" width="158" height="290" rx="14" fill="#fff" stroke="#b2dfdb" stroke-width="1.6"/>` + T(609, 88, 'المعدل الآن', { b: 1, c: '#003d33' });
+      g += `<g id="g11vk_dyn">${this.dyn1()}</g>`;
+      const qs = [['١', `أيّ من الإنزيمَين له ثابت ميكاليس-مينتين ${KM} أعلى من الآخر؟`], ['٢', `أيّ من الإنزيمَين له ${VMX} أعلى من الآخر؟`], ['٣', `أيّ من الإنزيمَين احتاج إلى تركيز أعلى من المادة المتفاعلة ليصل إلى ${VMX}؟`], ['٤', 'أيّ من الإنزيمَين احتاج إلى تركيز أعلى من المادة المتفاعلة ليشبع مواقعه النشطة؟']];
+      return SVG('g11vk_svg', 392, g) + `
+<div style="${CTRL}"><label>تركيز المادة المتفاعلة: <input type="range" min="0" max="1" step="0.01" value="0.15" style="${RANGE}" oninput="G11SIM_vmaxkm.setX(this.value)"></label>
+<button style="${btnStyle(false)}" onclick="G11SIM_vmaxkm.toggleKm()">📏 ${VMX} · ${HVM} · ${KM}</button></div>
+<div style="${NOTE}"><b>سؤال ٥</b> «يبين الشكل ٣-١٢ نتائج تجربتين. كان الهدف من التجربتَين مقارنة ألفة إنزيمَين مختلفَين للمادتَين المتفاعلتَين. الإنزيم (أ) له ألفة أعلى للمادة المتفاعلة من الإنزيم (ب). المنحنيان يمثلان نتائج الإنزيم (أ) والإنزيم (ب).» (كتاب الطالب ص ١١٥)
+<div style="margin-top:6px;">أ-٢. «اكتب تسمية المنحنى الخاص بالإنزيم (أ)، والمنحنى الخاص بالإنزيم (ب).» — المنحنى الأزرق هو:
+<button style="${btnStyle(false, '#1565c0')}" onclick="G11SIM_vmaxkm.label('A')">الإنزيم (أ)</button> <button style="${btnStyle(false, '#1565c0')}" onclick="G11SIM_vmaxkm.label('B')">الإنزيم (ب)</button> <span id="g11vk_ol"></span></div>
+${qs.map(([n, q], k) => `<div style="margin-top:6px;">ب-${n}. «${q}» <button style="${btnStyle(false)}" onclick="G11SIM_vmaxkm.ans(${k},'A')">(أ)</button> <button style="${btnStyle(false)}" onclick="G11SIM_vmaxkm.ans(${k},'B')">(ب)</button> <span id="g11vk_q${k}"></span></div>`).join('')}
+</div>
+<div style="${NOTE}font-size:15px;">المحوران في الشكل ٣-١٢ بلا أرقام؛ والمنحنيان هنا منقولان عن شكلهما في الكتاب. الإجابات من دليل المعلِّم ج2 ص ١٦١.</div>`;
+    },
+    dyn1() {
+      const F = this._F, s = this.s, a = fAff('A', s.x), b = fAff('B', s.x), px = F.X(s.x);
+      let g = '';
+      if (s.km) ['A', 'B'].forEach(e => {
+        const c = e === 'A' ? '#1565c0' : '#e65100', vm = AFF[e].vm, km = kmAff(e);
+        g += dline(F.o.x0, F.Y(vm), F.o.x0 + F.o.w, F.Y(vm), c, 1.6, '8 6') + dline(F.o.x0, F.Y(vm / 2), F.X(km), F.Y(vm / 2), c, 1.6, '4 4') + dline(F.X(km), F.Y(vm / 2), F.X(km), F.o.y0, c, 1.6, '4 4');
+        g += TL(F.X(km), F.o.y0 + 20, `K<tspan font-size="12" baseline-shift="sub">m</tspan>${e === 'A' ? '(أ)' : '(ب)'}`, { c, b: 1, fs: 16 });
+        g += TL(F.o.x0 + 6, F.Y(vm) - 6, `V<tspan font-size="12" baseline-shift="sub">max</tspan>${e === 'A' ? '(أ)' : '(ب)'}`, { a: 'start', c, b: 1, fs: 16 });
+      });
+      g += dline(px, F.o.y0, px, F.Y(Math.max(a, b)), '#37474f', 1.6, '5 4');
+      g += `<circle cx="${px.toFixed(1)}" cy="${F.Y(a).toFixed(1)}" r="7" fill="#1565c0" stroke="#fff" stroke-width="2"/><circle cx="${px.toFixed(1)}" cy="${F.Y(b).toFixed(1)}" r="7" fill="#e65100" stroke="#fff" stroke-width="2"/>`;
+      if (s.lab) {
+        g += T(F.X(0.06) + 70, F.Y(0.57) - 12, 'الإنزيم (أ)', { b: 1, c: '#1565c0' }) + T(F.X(0.62), F.Y(fAff('B', 0.62)) + 28, 'الإنزيم (ب)', { b: 1, c: '#e65100' });
+      }
+      // عمودان للمعدل الحالي
+      const H = 200, base = 320;
+      g += `<rect x="556" y="${(base - H * a).toFixed(1)}" width="40" height="${(H * a).toFixed(1)}" fill="#1565c0"/><rect x="622" y="${(base - H * b).toFixed(1)}" width="40" height="${(H * b).toFixed(1)}" fill="#e65100"/>`;
+      g += dline(546, base, 672, base, '#37474f', 1.6);
+      g += T(576, base + 22, s.lab ? '(أ)' : 'الأزرق', { fs: 16, b: 1, c: '#1565c0' }) + T(642, base + 22, s.lab ? '(ب)' : 'البرتقالي', { fs: 16, b: 1, c: '#e65100' });
+      return g;
+    },
+    redraw1() { if ($('g11vk_dyn')) $('g11vk_dyn').innerHTML = this.dyn1(); },
+    setX(v) { this.s.x = +v; this.redraw1(); },
+    toggleKm() { this.s.km = !this.s.km; this.redraw1(); },
+    label(e) {
+      const o = $('g11vk_ol');
+      if (e === 'A') { this.s.lab = true; if (o) o.innerHTML = ok(`الإنزيم (أ) ألفته أعلى، فيصل إلى ${HVM} عند تركيز أقلَّ من المادة المتفاعلة (${KM} أقل).`); }
+      else if (o) o.innerHTML = no(`«فكلما كانت ألفة الإنزيم أعلى، كان تركيز مادته المتفاعلة اللازم للوصول إلى ${HVM} أقل» — أيُّ المنحنيين يصل إلى نصف قيمته القصوى أسرع؟`);
+      this.redraw1();
+    },
+    ans(k, e) {
+      const o = $('g11vk_q' + k); if (!o) return;
+      o.innerHTML = e === 'B' ? ok('إنزيم ب (دليل المعلِّم ج2 ص ١٦١)') : no('راجع الخطوط المتقطِّعة (اضغط زرَّ 📏).');
+    },
+
+    // ───────── المرحلة 2: المثبِّطات (ص ١١٥–١١٦ + سؤال ٩ ص ١٢٣) ─────────
+    build2() {
+      this.s = { type: 'comp', lvl: 'mid', x: 0.15, km: false };
+      const F = this._F = frame({ id: 'g11vk_f', x0: 92, y0: 330, w: 380, h: 262, xmin: 0, xmax: 1, ymax: 1.1, xty: 380, xt: `[${N('S')}] = تركيز المادة المتفاعلة`, yt: `${N('V')} = المعدل (السرعة)`, ytx: 58 });
+      const I = this._I = frame({ id: 'g11vk_i', x0: 548, y0: 300, w: 132, h: 150, xmin: 0, xmax: 1, ymax: 1.05, gy: [0.5, 1], yl: [[0, '0'], [0.5, '50%'], [1, '100%']], xt: `[${N('S')}]` });
+      let g = F.s + I.s + T(282, 34, 'المعدل مع المثبِّط وبدونه (الشكل في سؤال ٩)', { b: 1, c: '#003d33', fs: 17 });
+      g += T(608, 112, 'المعدل مع المثبِّط', { fs: 16, b: 1, c: '#003d33' }) + T(608, 132, '÷ المعدل بدونه', { fs: 16, b: 1, c: '#003d33' }) + T(608, 380, '(توضيحي)', { fs: 16, c: '#e65100' });
+      g += fpath(vNone, 0, 1, F.X, F.Y, '#212121', 3);
+      g += `<g id="g11vk_dyn">${this.dyn2()}</g>`;
+      return SVG('g11vk_svg', 392, g) + `
+<div style="${CTRL}"><span>المثبِّط:</span>
+<button id="g11vk_tcomp" style="${btnStyle(true, '#1565c0')}" onclick="G11SIM_vmaxkm.setType('comp')">تنافسي (المثبِّط أ)</button>
+<button id="g11vk_tnon" style="${btnStyle(false, '#6a1b9a')}" onclick="G11SIM_vmaxkm.setType('non')">غير تنافسي (المثبِّط ب)</button>
+<label>تركيز المثبِّط ${TAG}: <select style="${SEL}" onchange="G11SIM_vmaxkm.setLvl(this.value)"><option value="low">منخفض</option><option value="mid" selected>متوسِّط (كشكل الكتاب)</option><option value="high">مرتفع</option></select></label></div>
+<div style="${CTRL}"><label>زِد تركيز المادة المتفاعلة [${L('S')}]: <input type="range" min="0.02" max="1" step="0.01" value="0.15" style="${RANGE}" oninput="G11SIM_vmaxkm.setS(this.value)"></label>
+<button style="${btnStyle(false)}" onclick="G11SIM_vmaxkm.toggleKm2()">📏 ${VMX} · ${KM}</button></div>
+<div id="g11vk_read" style="${CTRL}font-size:17px;color:#003d33;">${this.read2()}</div>
+<div id="g11vk_state" style="${NOTE}">${this.state2()}</div>
+<div style="${NOTE}font-size:15px;">المنحنيات على هيئة الشكل في سؤال نهاية الوحدة ٩ (كتاب الطالب ص ١٢٣)، وتأثير كلِّ مثبِّط على ${VMX} و${KM} من إجابة دليل المعلِّم ج2 ص ١٦٣: «ليس للمثبط (أ) تأثير على ${VMX} وهو يزيد من ${KM}»، و«يخفض المثبط (ب) ${VMX}، وليس له تأثير على ${KM}». مقدار التثبيط ونسبته المئويَّة وأثر «تركيز المثبِّط» ${TAG}.</div>`;
+    },
+    dyn2() {
+      const F = this._F, I = this._I, s = this.s, i = INH_I[s.lvl], c = s.type === 'comp' ? '#1565c0' : '#6a1b9a';
+      const f = x => vInh(s.type, i, x);
+      let g = fpath(f, 0, 1, F.X, F.Y, c, 3, s.type === 'comp' ? '10 6' : '3 5');
+      g += T(F.X(0.15), F.Y(0.86), 'بدون مثبِّط', { b: 1, fs: 16 });
+      g += T(F.X(0.8), F.Y(f(0.8)) + (s.type === 'comp' ? 26 : -12), s.type === 'comp' ? 'المثبِّط (أ)' : 'المثبِّط (ب)', { b: 1, fs: 16, c });
+      if (s.km) {
+        const k0 = kmInh('none', i), k1 = kmInh(s.type, i), vm = vmInh(s.type, i), sub = t => `<tspan font-size="12" baseline-shift="sub">${t}</tspan>`;
+        g += dline(F.o.x0, F.Y(1), F.o.x0 + F.o.w, F.Y(1), '#212121', 1.4, '8 6') + TL(F.o.x0 + F.o.w - 4, F.Y(1) - 6, 'V' + sub('max'), { a: 'end', fs: 16, b: 1 });
+        g += dline(F.o.x0, F.Y(0.5), F.X(k0), F.Y(0.5), '#212121', 1.4, '4 4') + dline(F.X(k0), F.Y(0.5), F.X(k0), F.o.y0, '#212121', 1.4, '4 4') + TL(F.X(k0), F.o.y0 + 20, 'K' + sub('m'), { fs: 16, b: 1 });
+        if (s.type === 'non') {
+          g += dline(F.o.x0, F.Y(vm), F.o.x0 + F.o.w, F.Y(vm), c, 1.4, '8 6') + TL(F.o.x0 + F.o.w - 4, F.Y(vm) - 6, "V" + sub('max') + "'", { a: 'end', fs: 16, b: 1, c });
+          g += dline(F.o.x0, F.Y(vm / 2), F.X(k0), F.Y(vm / 2), c, 1.4, '4 4') + `<circle cx="${F.X(k0).toFixed(1)}" cy="${F.Y(vm / 2).toFixed(1)}" r="5" fill="${c}"/>`;
+        } else {
+          g += dline(F.X(k1), F.Y(0.5), F.X(k1), F.o.y0, c, 1.4, '4 4') + dline(F.X(k0), F.Y(0.5), F.X(k1), F.Y(0.5), c, 1.4, '4 4') + TL(F.X(k1), F.o.y0 + 20, 'K' + sub('m') + "'", { fs: 16, b: 1, c });
+        }
+      }
+      const px = F.X(s.x), a = vNone(s.x), b = f(s.x);
+      g += dline(px, F.o.y0, px, F.Y(a), '#37474f', 1.6, '5 4');
+      g += `<circle cx="${px.toFixed(1)}" cy="${F.Y(a).toFixed(1)}" r="7" fill="#212121" stroke="#fff" stroke-width="2"/><circle cx="${px.toFixed(1)}" cy="${F.Y(b).toFixed(1)}" r="7" fill="${c}" stroke="#fff" stroke-width="2"/>`;
+      // الرسم الصغير: النسبة مقابل [S]
+      g += fpath(x => f(x) / vNone(x), 0.01, 1, I.X, I.Y, c, 2.6);
+      g += `<circle cx="${I.X(s.x).toFixed(1)}" cy="${I.Y(b / a).toFixed(1)}" r="6" fill="${c}" stroke="#fff" stroke-width="2"/>`;
+      return g;
+    },
+    ratio() { const s = this.s; return vInh(s.type, INH_I[s.lvl], s.x) / vNone(s.x); },
+    read2() { return `المعدل مع المثبِّط ≈ <b>${L(Math.round(this.ratio() * 100) + '%')}</b> من المعدل بدونه عند هذا التركيز ${TAG}`; },
+    state2() {
+      const s = this.s;
+      if (s.type === 'comp') return `<b>التثبيط التنافسي:</b> «وإذا كانت جزيئات المادة المتفاعلة أكثر من الجزيئات المثبّطة، فستفوز جزيئات المادة المتفاعلة بسهولة في التنافس، وبالتالي لن تتأثر وظيفة الإنزيم كثيرًا.» (كتاب الطالب ص ١١٥)<br>«يخفض ارتفاع تركيز المادة المتفاعلة من درجة التثبيط، وبالمقابل يزيد ارتفاع تركيز الجزيئات المثبطة من درجة التثبيط.» (مصطلحات علمية، ص ١١٥)` + (this.ratio() > 0.85 ? `<br>${ok('عند هذا التركيز المرتفع من المادة المتفاعلة يقترب المعدل من المعدل بدون مثبِّط.')}` : '');
+      return `<b>التثبيط غير التنافسي:</b> «يرتبط الجزيء المثبّط بجزء آخر من الإنزيم غير الموقع النشط.» … «ولن يكون لزيادة تركيز المادة المتفاعلة أيّ تأثير على التثبيط، بخلاف التثبيط التنافسي.» (كتاب الطالب ص ١١٦)<br>لاحظ: النسبة في الرسم الصغير ثابتة مهما زاد [${L('S')}].`;
+    },
+    refresh2() { if ($('g11vk_dyn')) $('g11vk_dyn').innerHTML = this.dyn2(); if ($('g11vk_read')) $('g11vk_read').innerHTML = this.read2(); if ($('g11vk_state')) $('g11vk_state').innerHTML = this.state2(); },
+    setType(t) {
+      this.s.type = t;
+      const a = $('g11vk_tcomp'), b = $('g11vk_tnon');
+      if (a) a.setAttribute('style', btnStyle(t === 'comp', '#1565c0')); if (b) b.setAttribute('style', btnStyle(t === 'non', '#6a1b9a'));
+      this.refresh2();
+    },
+    setLvl(l) { this.s.lvl = l; this.refresh2(); },
+    setS(v) { this.s.x = +v; this.refresh2(); },
+    toggleKm2() { this.s.km = !this.s.km; this.refresh2(); }
+  };
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // ٣) g11_immobilised — الإنزيمات المثبَّتة (الدرس ٣-٧)
+  // ═══════════════════════════════════════════════════════════════════════
+  // سؤال نهاية الوحدة ٨ (كتاب الطالب ص ١٢٢): الجلوكوز في الحليب (mg/L) بعد كلِّ مرَّة تمرير عبر المحقنة
+  const LAC = { imm: [0, 148, 302, 400], free: [0, 246, 342, 400] };
+  const LAC_MAX = 400;   // «تم الوصول إلى الحد الأقصى نفسه … حيث تم تحلل كل المادة المتفاعلة (اللاكتوز) إلى نواتج» (الدليل ج2 ص ١٦٢)
+  // كتاب الأنشطة ص ١١٣ (أسئلة نهاية الوحدة ٣): النشاط النسبي % للبكتينيز بعد التخزين عند 4 °C — قراءة من الشكل
+  const PEC_D = [5, 10, 15, 20, 25, 30];
+  const PEC = { imm: [99, 74, 73, 72, 63, 51], free: [99, 64, 64, 47, 45, 9] };
+  const pctLactose = g => Math.round(g / LAC_MAX * 100);
+
+  const IM = window.G11SIM_immob = {
+    LAC, LAC_MAX, PEC, PEC_D, pctLactose,
+    s: { type: 'imm', n: { imm: 0, free: 0 }, run: false },
+
+    // ───────── المرحلة 0: تمرير الحليب عبر الأسطوانة ─────────
+    build0() {
+      this.s = { type: 'imm', n: { imm: 0, free: 0 }, run: false };
+      const F = this._F = frame({ id: 'g11im_f', x0: 78, y0: 330, w: 250, h: 250, xmin: 0, xmax: 3, ymax: 500, gx: [0, 1, 2, 3], gy: range(0, 500, 50), xl: [0, 1, 2, 3].map(v => [v, String(v)]), yl: range(0, 500, 100).map(v => [v, String(v)]), xt: 'عدد مرَّات تمرير الحليب عبر المحقنة', yt: `الجلوكوز في الحليب (${N('mg/L')})`, ytx: 26 });
+      let g = F.s + T(200, 36, 'الجلوكوز في الحليب المتجمِّع', { b: 1, c: '#003d33', fs: 17 });
+      g += T(300, 70, '× لاكتيز مثبت', { a: 'start', fs: 16, c: '#00695c', b: 1 });
+      g += T(170, 70, '× لاكتيز حر', { a: 'start', fs: 16, c: '#C8102E', b: 1 });
+      g += `<g id="g11im_dyn">${this.dyn0()}</g>`;
+      return SVG('g11im_svg', 400, g) + `
+<div style="${CTRL}"><span>المحقنة:</span>
+<button id="g11im_timm" style="${btnStyle(true)}" onclick="G11SIM_immob.setType('imm')">(أ) لاكتيز مثبت في حبيبات الألجينات</button>
+<button id="g11im_tfree" style="${btnStyle(false, '#C8102E')}" onclick="G11SIM_immob.setType('free')">(ب) لاكتيز حر في الحليب</button></div>
+<div style="${CTRL}"><button style="${btnStyle(true, '#009A44')}" onclick="G11SIM_immob.pass()">⬇ مرِّر الحليب عبر المحقنة</button>
+<button style="${btnStyle(false)}" onclick="G11SIM_immob.reset0()">↺ ابدأ من جديد</button>
+<button style="${btnStyle(false)}" onclick="G11SIM_immob.all0()">⏭ النتائج كلُّها</button></div>
+<div id="g11im_read" style="${NOTE}">${this.read0()}</div>
+<div id="g11im_expl" style="${NOTE}display:none;"></div>
+<div style="${NOTE}font-size:15px;">النتائج من جدول سؤال نهاية الوحدة ٨ (كتاب الطالب ص ١٢٢): «تم تمرير عينتَي الحليب عبر أسطوانة كل من المحقنتين (أ) و(ب) لثلاث مرات، وتم قياس مستويات الجلوكوز في الحليب المتجمع بعد كل مرَّة من تمريره عبر كل محقنة.» نسبة اللاكتوز المتحلِّل = الجلوكوز ÷ ${L('400 mg/L')} (الحدُّ الأقصى الذي يعني تحلُّل كلِّ اللاكتوز، الدليل ج2 ص ١٦٢). <b>ملاحظة المنصَّة:</b> لا يعطي الكتابان علاقة كمِّيَّة بين سرعة تدفُّق الحليب ونسبة التحويل، لذا المتغيِّر هنا عدد مرَّات التمرير كما في السؤال.</div>`;
+    },
+    dyn0() {
+      const F = this._F, s = this.s, imm = s.type === 'imm';
+      let g = '';
+      // المنحنيان (النقاط المنجزة فقط)
+      ['imm', 'free'].forEach(t => {
+        const n = s.n[t], c = t === 'imm' ? '#00695c' : '#C8102E';
+        if (n > 0) { let d = ''; for (let k = 0; k <= n; k++) d += (k ? 'L' : 'M') + F.X(k) + ' ' + F.Y(LAC[t][k]); g += `<path d="${d}" fill="none" style="stroke:${c};stroke-width:${t === s.type ? 3.4 : 2};opacity:${t === s.type ? 1 : 0.55};"/>`; }
+        for (let k = 0; k <= n; k++) g += cross(F.X(k), F.Y(LAC[t][k]), c, 5);
+      });
+      // ── الجهاز (على هيئة شكل السؤال ٨ والشكل ٣-١٦) ──
+      const bx = 420, bw = 64, top = 70, beadTop = 168, beadBot = 270, n = s.n[s.type];
+      g += T(bx + bw / 2, 52, imm ? 'أسطوانة المحقنة (أ)' : 'أسطوانة المحقنة (ب)', { b: 1, c: '#003d33' });
+      // الحليب فوق الحبيبات (أثناء التمرير)
+      if (s.run) {
+        g += `<rect x="${bx + 3}" y="${top + 34}" width="${bw - 6}" height="${beadTop - top - 34}" fill="#fffde7"/>`;
+        if (!imm) for (let k = 0; k < 7; k++) g += `<circle cx="${bx + 10 + (k * 13) % (bw - 18)}" cy="${top + 44 + (k * 17) % 50}" r="3" fill="#1565c0"/>`;
+      }
+      // الحبيبات
+      for (let r = 0; r < 6; r++) for (let q = 0; q < 4; q++) {
+        const cx = bx + 11 + q * 14 + (r % 2 ? 7 : 0), cy = beadTop + 8 + r * 17;
+        if (cx > bx + bw - 8) continue;
+        g += `<circle cx="${cx}" cy="${cy}" r="7.5" fill="${s.run ? '#fff8e1' : '#fff'}" stroke="#546e7a" stroke-width="1.3"/>`;
+        if (imm) g += `<circle cx="${cx - 2}" cy="${cy - 1}" r="2" fill="#1565c0"/><circle cx="${cx + 2.5}" cy="${cy + 2}" r="1.6" fill="#1565c0"/>`;
+      }
+      // جسم المحقنة ورأسها
+      g += `<path d="M${bx} ${top} V${beadBot + 6} L${bx + bw / 2 - 6} ${beadBot + 26} V${beadBot + 40} M${bx + bw} ${top} V${beadBot + 6} L${bx + bw / 2 + 6} ${beadBot + 26} V${beadBot + 40}" fill="none" stroke="#37474f" stroke-width="2.4"/>`;
+      g += `<line x1="${bx - 8}" y1="${top}" x2="${bx}" y2="${top}" stroke="#37474f" stroke-width="2.4"/><line x1="${bx + bw}" y1="${top}" x2="${bx + bw + 8}" y2="${top}" stroke="#37474f" stroke-width="2.4"/>`;
+      // قطرات أثناء التمرير
+      const dx = bx + bw / 2;
+      if (s.run) for (let k = 0; k < 3; k++) g += `<ellipse cx="${dx}" cy="${beadBot + 46}" rx="4" ry="6" fill="#fff59d" stroke="#bdb76b" stroke-width="1"><animate attributeName="cy" values="${beadBot + 44};${beadBot + 92}" dur="0.6s" begin="${k * 0.2}s" repeatCount="indefinite"/></ellipse>`;
+      // الكأس والحليب المتجمِّع
+      const by0 = 320, by1 = 388, lvl = n > 0 || s.run ? 30 : 0;
+      if (lvl) {
+        g += `<rect x="${dx - 54}" y="${by1 - lvl}" width="108" height="${lvl}" fill="#fffde7"/>`;
+        if (!imm) for (let k = 0; k < 8; k++) g += `<circle cx="${dx - 44 + k * 12}" cy="${by1 - 8 - (k % 3) * 7}" r="3" fill="#1565c0"/>`;
+      }
+      g += `<path d="M${dx - 58} ${by0} V${by1} H${dx + 58} V${by0}" fill="none" stroke="#37474f" stroke-width="2.2"/>`;
+      // تسميات (على هيئة شكل الكتاب)
+      const lab = (y1, y2, t1, t2, c) => dline(bx + bw + 2, y1, 500, y2, '#455a64', 1.2) + T(504, y2 + 5, t1, { a: 'end', fs: 16, c: c || '#263238' }) + (t2 ? T(504, y2 + 25, t2, { a: 'end', fs: 16, c: c || '#263238' }) : '');
+      g += lab(top + 60, 110, imm ? 'حليب' : 'حليب مع محلول', imm ? '' : 'اللاكتيز (لاكتيز حر)');
+      g += lab(beadTop + 40, 190, imm ? 'كريات ألجينات مع' : 'كريات بدون لاكتيز', imm ? 'إنزيم اللاكتيز (لاكتيز مثبت)' : '');
+      g += lab(by1 - 14, 300, 'حليب', '');
+      // نتيجة الحليب المتجمِّع
+      g += T(524, 350, imm ? 'الإنزيم يبقى في' : 'الحليب يحمل', { a: 'end', fs: 16, b: 1, c: imm ? '#009A44' : '#C8102E' }) + T(524, 370, imm ? 'الحبيبات' : 'اللاكتيز معه', { a: 'end', fs: 16, b: 1, c: imm ? '#009A44' : '#C8102E' });
+      return g;
+    },
+    read0() {
+      const s = this.s, t = s.type, n = s.n[t], gl = LAC[t][n];
+      let h = `${t === 'imm' ? 'المحقنة (أ) — <b>لاكتيز مثبت</b>' : 'المحقنة (ب) — <b>لاكتيز حر</b>'} · عدد مرَّات التمرير: <b>${L(String(n))}</b> · الجلوكوز في الحليب: <b>${L(gl + ' mg/L')}</b> · اللاكتوز المتحلِّل ≈ <b>${L(pctLactose(gl) + '%')}</b>`;
+      h += `<div style="height:14px;background:#eceff1;border-radius:7px;margin:6px 0;overflow:hidden;direction:ltr;"><div style="height:100%;width:${pctLactose(gl)}%;background:${t === 'imm' ? '#00695c' : '#C8102E'};"></div></div>`;
+      h += t === 'imm' ? `<span style="font-size:15px;">«يؤمّن استخدام الإنزيمات المثبتة الحفاظ على الإنزيمات وإعادة استخدامها، والحصول على منتج خالٍ من الإنزيمات (غير ملوّث بها).» (كتاب الطالب ص ١١٨)</span>` : `<span style="font-size:15px;">«فعند مزج اللاكتيز (غير المثبت) مع الحليب، سيصعب الحصول على اللاكتيز مرة أخرى (لغرض استخدامه)، وسيكون الحليب ملوثًا بالإنزيمات» (كتاب الطالب ص ١١٧)</span>`;
+      return h;
+    },
+    refresh0() {
+      if ($('g11im_dyn')) $('g11im_dyn').innerHTML = this.dyn0();
+      if ($('g11im_read')) $('g11im_read').innerHTML = this.read0();
+      const e = $('g11im_expl');
+      if (e) {
+        const done = this.s.n.imm === 3 && this.s.n.free === 3;
+        e.style.display = done ? 'block' : 'none';
+        if (done) e.innerHTML = `<b>د. «صف النمط المبين في التمثيل البياني، واشرحه.»</b> (كتاب الطالب ص ١٢٣)<br><b>إجابة الدليل:</b> «معدل التفاعل الأولي للاكتيز الحر أعلى من معدل التفاعل الأولي للاكتيز المثبت إلّا أن كلًّا من اللاكتيز الحر واللاكتيز المثبت (المثبت هو المصطلح الأهم في حبيبات الألجينات) أنتجا الكمية القصوى نفسها من الجلوكوز الموجود في الحليب (${L('400 mg/L')}).» «يكون المعدل الأولي للتفاعل مع اللاكتيز المثبت في حبيبات الألجينات أقل مما هو مع اللاكتيز الحر لأن المادة المتفاعلة لا يمكنها أن تختلط بحرية مع الإنزيم أو اللاكتيز.» (دليل المعلِّم ج2 ص ١٦٢)`;
+      }
+    },
+    setType(t) {
+      if (this.s.run) return;
+      this.s.type = t;
+      const a = $('g11im_timm'), b = $('g11im_tfree');
+      if (a) a.setAttribute('style', btnStyle(t === 'imm')); if (b) b.setAttribute('style', btnStyle(t === 'free', '#C8102E'));
+      this.refresh0();
+    },
+    pass() {
+      const s = this.s; if (s.run || s.n[s.type] >= 3) { if (s.n[s.type] >= 3 && $('g11im_read')) $('g11im_read').innerHTML = this.read0() + `<div style="margin-top:4px;">${ok('مُرِّر الحليب ثلاث مرَّات كما في السؤال — جرِّب المحقنة الأخرى أو ابدأ من جديد.')}</div>`; return; }
+      s.run = true; this.refresh0();
+      setTimeout(() => { s.run = false; s.n[s.type]++; this.refresh0(); }, 1500);
+    },
+    reset0() { if (this.s.run) return; this.s.n = { imm: 0, free: 0 }; this.refresh0(); },
+    all0() { if (this.s.run) return; this.s.n = { imm: 3, free: 3 }; this.refresh0(); },
+
+    // ───────── المرحلة 1: الاستقرار أثناء التخزين (البكتينيز) ─────────
+    build1() {
+      this.s = { day: 5 };
+      const F = this._F = frame({ id: 'g11im_f', x0: 92, y0: 330, w: 400, h: 262, xmin: 0, xmax: 32.5, ymax: 120, gx: range(0, 30, 5), gy: range(0, 120, 10), xl: PEC_D.map(v => [v, String(v)]), yl: range(0, 120, 20).map(v => [v, String(v)]), xt: 'زمن التخزين (أيام)', yt: `النشاط النسبي ${N('%')}`, ytx: 50 });
+      let g = F.s + T(300, 34, `نشاط البكتينيز الحر والمثبت بعد التخزين عند ${N('4 °C')}`, { b: 1, c: '#003d33', fs: 17 });
+      g += `<line x1="520" y1="160" x2="550" y2="160" stroke="#37474f" stroke-width="3.4"/>` + T(556, 166, 'بكتينيز مثبت', { a: 'end', b: 1 });
+      g += `<line x1="520" y1="192" x2="550" y2="192" stroke="#9e9e9e" stroke-width="3.4"/>` + T(556, 198, 'بكتينيز حر', { a: 'end', b: 1 });
+      g += `<g id="g11im_dyn">${this.dyn1()}</g>`;
+      return SVG('g11im_svg', 392, g) + `
+<div style="${CTRL}"><label>زمن التخزين: <input type="range" min="5" max="30" step="5" value="5" style="${RANGE}" oninput="G11SIM_immob.setDay(this.value)"></label><b id="g11im_dv">${L('5')}</b> يومًا</div>
+<div id="g11im_read" style="${NOTE}">${this.read1()}</div>
+<div style="${NOTE}font-size:15px;">«أجريت تجربة لمقارنة تأثير وقت التخزين على استقرار (أو ثبات) البكتينيز الحر والبكتينيز المثبت. حيث تم تخزين البكتينيز عند درجة حرارة ${L('4 °C')} لمدة 30 يومًا. تم سحب عينة كل 5 أيام لقياس نشاط الإنزيم وتسجيله كنسبة مئوية من نشاطه قبل التخزين.» (كتاب الأنشطة ص ١١٣، أسئلة نهاية الوحدة ٣) — القيم قراءة تقريبيَّة من الشكل.</div>`;
+    },
+    dyn1() {
+      const F = this._F, d = this.s.day, k = PEC_D.indexOf(d);
+      let g = '';
+      [['imm', '#37474f'], ['free', '#9e9e9e']].forEach(([t, c]) => {
+        let p = ''; for (let j = 0; j <= k; j++) p += (j ? 'L' : 'M') + F.X(PEC_D[j]) + ' ' + F.Y(PEC[t][j]);
+        if (k > 0) g += `<path d="${p}" fill="none" style="stroke:${c};stroke-width:3.4;"/>`;
+        for (let j = 0; j <= k; j++) g += cross(F.X(PEC_D[j]), F.Y(PEC[t][j]), c, 7);
+      });
+      g += dline(F.X(d), F.o.y0, F.X(d), F.Y(110), '#00695c', 1.6, '5 4');
+      g += `<rect x="512" y="232" width="176" height="96" rx="12" fill="#fff" stroke="#b2dfdb" stroke-width="1.6"/>`;
+      g += T(600, 256, `بعد ${N(String(d))} يومًا`, { b: 1, c: '#003d33' });
+      g += T(676, 284, 'المثبت:', { a: 'start', c: '#37474f' }) + TL(530, 284, `${PEC.imm[k]}%`, { a: 'start', b: 1, c: '#37474f' });
+      g += T(676, 312, 'الحر:', { a: 'start', c: '#757575' }) + TL(530, 312, `${PEC.free[k]}%`, { a: 'start', b: 1, c: '#757575' });
+      return g;
+    },
+    read1() {
+      const d = this.s.day, k = PEC_D.indexOf(d);
+      let h = `بعد ${L(String(d))} يومًا: البكتينيز المثبت ≈ <b>${L(PEC.imm[k] + '%')}</b> من نشاطه قبل التخزين، والبكتينيز الحر ≈ <b>${L(PEC.free[k] + '%')}</b>.`;
+      if (d === 30) h += `<div style="margin-top:6px;"><b>أ. «قارن بين تأثير تخزين عينة البكتينيز الحر والمثبت.»</b><br><b>إجابة الدليل:</b> «إن نشاط البكتينيز المثبت هو أعلى من نشاط البكتينيز الحر في جميع الحالات، إذ ينخفض نشاط الإنزيم المثبت إلى ${L('50%')} تقريبًا من نشاطه الأولي بعد 30 يومًا، فيما يهبط نشاط البكتينيز الحر إلى ${L('10%')}» (دليل المعلِّم ج2 ص ١٨٥)</div>`;
+      else h += `<div style="font-size:15px;margin-top:4px;">حرِّك المنزلق حتى اليوم ${L('30')} لترى المقارنة كاملة.</div>`;
+      return h;
+    },
+    setDay(v) {
+      this.s.day = +v;
+      if ($('g11im_dv')) $('g11im_dv').innerHTML = L(String(v));
+      if ($('g11im_dyn')) $('g11im_dyn').innerHTML = this.dyn1();
+      if ($('g11im_read')) $('g11im_read').innerHTML = this.read1();
+    }
+  };
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // التسجيل
+  // ═══════════════════════════════════════════════════════════════════════
+  G.simulations = Object.assign(G.simulations || {}, {
+    g11_enzyme_factors: {
+      sem: 'S1',
+      title: '🌡 العوامل المؤثرة في عمل الإنزيم (٣-٤)',
+      stages: ['درجة الحرارة (الشكل ٣-٧)', 'الرقم الهيدروجيني pH (الشكل ٣-٨)', 'تركيز الإنزيم (الشكل ٣-٩)', 'تركيز المادة المتفاعلة (الشكل ٣-١٠)'],
+      info: [
+        'سبق أن درست في الصف التاسع، تأثير درجة الحرارة والرقم الهيدروجيني pH على الإنزيمات. يبيّن الشكل ٣-٧ تأثير درجة الحرارة على إنزيم نموذجي، ويتضمن تأثير ارتفاع درجة الحرارة على تغيير طبيعة الإنزيم (مسخ). (كتاب الطالب ص ١١١)',
+        'يبيّن الشكل ٣-٨ تأثير الرقم الهيدروجيني pH على إنزيم نموذجي. توجد أيضًا عوامل أخرى يمكن أن تؤثر على معدل تفاعل الإنزيمات، نعرضها تاليًا بمزيد من التفصيل. (كتاب الطالب ص ١١١) — «يعتمد الرقم الهيدروجيني pH الأمثل على الإنزيم: في هذه الحالة، الرقم الهيدروجيني pH الأمثل هو 7.» (الشكل ٣-٨، ص ١١١)',
+        'يمكن مقارنة معدلات هذه التفاعلات الخمسة لمعرفة تأثير تركيز الإنزيم على معدل التفاعل. من الأفضل ملاحظة المعدل في بداية التفاعل مباشرة، لأنه مع بدء التفاعل تتفاوت كميّة المادة المتفاعلة في كل تفاعل، وذلك لأن المادة المتفاعلة تتحوّل إلى ناتج بمعدلات مختلفة في كل من التفاعلات الخمسة. (كتاب الطالب ص ١١٢) فكلما زادت كمية الإنزيم زادت المواقع النشطة المتاحة لارتباط المادة المتفاعلة. ومع وفرة المادة المتفاعلة، يزداد المعدل الأولي للتفاعل خطيًا مع تركيز الإنزيم. (كتاب الطالب ص ١١٣)',
+        'يبيّن الشكل ٣-١٠ نتائج استقصاء يتضمّن استخدام إنزيم الكتاليز وبيروكسيد الهيدروجين كمادة متفاعلة. إذ يظهر تباين حجم بيروكسيد الهيدروجين، بينما يبقى حجم الكتاليز ثابتًا. (كتاب الطالب ص ١١٣) السرعة القصوى V<sub>max</sub>: السرعة النظرية القصوى لتفاعل يتحكم به الإنزيم، وتتحقق عندما تكون جميع المواقع النشطة للإنزيم ممتلئة. (مصطلحات علمية، كتاب الطالب ص ١١٣)'
+      ],
+      build(i) {
+        return WRAP(i === 0 || i === 1 ? EF.buildCurve(i) : i === 2 ? EF.buildEC() : EF.buildSub());
+      }
+    },
+    g11_vmax_km: {
+      sem: 'S1',
+      title: '📈 Vmax وKm والألفة والمثبِّطات (٣-٥ و٣-٦)',
+      stages: ['قراءة Vmax وKm (نشاط ٣-٢)', 'مقارنة ألفة إنزيمين (الشكل ٣-١٢)', 'المثبِّطات التنافسيَّة وغير التنافسيَّة'],
+      info: [
+        'لإيجاد قيمة V<sub>max</sub> يتم قياس معدل التفاعل الأولي لتراكيز المادة المتفاعلة المختلفة، ينتج منه منحنى كما هو مبيّن في الشكلَين ٣-١٠ و٣-١١. يعرف تركيز المادة المتفاعلة عند قيمة ½V<sub>max</sub> باسم ثابت ميكاليس-مينتين Michaelis-Menten Constant (K<sub>m</sub>)، وهو يعبّر عن تركيز المادة المتفاعلة التي يعمل عندها الإنزيم بنصف معدله الأقصى، ويمثل مقياسًا لألفة الإنزيم لمادته المتفاعلة. (كتاب الطالب ص ١١٤)',
+        'وألفة الإنزيم هي مقياس قوة الجذب بين الإنزيم والمادة المتفاعلة. فكلما زادت ألفة الإنزيم للمادة المتفاعلة، زاد احتمال بقاء المادة المتفاعلة في الموقع النشط لفترة كافية لاستكمال التفاعل، وعمومًا كلما زادت الألفة زاد عمل الإنزيم. (كتاب الطالب ص ١١٤) فكلما كانت ألفة الإنزيم أعلى، كان تركيز مادته المتفاعلة اللازم للوصول إلى ½V<sub>max</sub> أقل، وكانت قيمة K<sub>m</sub> أقل. (كتاب الطالب ص ١١٤)',
+        'لكن إذا ارتفع تركيز المادة المثبّطة أو انخفض تركيز المادة المتفاعلة، ينخفض احتمال ارتباط المادة المتفاعلة بموقع نشط فارغ، الأمر الذي يؤدي إلى تثبيط وظيفة الإنزيم، فيما يسمّى التثبيط التنافسي Competitive inhibition (الشكل ٣-١٣أ). وهو عكسي أي قابل للعكس أحيانًا عبر زيادة تركيز المادة المتفاعلة. (كتاب الطالب ص ١١٥) وهكذا، فإن جُزيء المادة المتفاعلة والجزيء المثبّط غير متنافسَين على الموقع النشط، فيما يُعدّ مثالًا على التثبيط غير التنافسي Non-competitive inhibition كما هو مبين في الشكل ٣-١٣ب، ولن يكون لزيادة تركيز المادة المتفاعلة أيّ تأثير على التثبيط، بخلاف التثبيط التنافسي. (كتاب الطالب ص ١١٦)'
+      ],
+      build(i) { return WRAP(i === 0 ? VK.build0() : i === 1 ? VK.build1() : VK.build2()); }
+    },
+    g11_immobilised: {
+      sem: 'S1',
+      title: '🥛 الإنزيمات المثبتة: عمود اللاكتيز (٣-٧)',
+      stages: ['تمرير الحليب: لاكتيز مثبت أم حر؟', 'الاستقرار أثناء التخزين (البكتينيز)'],
+      info: [
+        'يمكن تثبيت اللاكتيز باستخدام كريات (حبيبات) الألجينات كما في الشكل ٣-١٥. فالمادة المتفاعلة للاكتيز هي السكّر الثنائي اللاكتوز. يمرر الحليب داخل عمود (أسطوانة) يحتوي على كريات (حبيبات) محتوية على اللاكتيز كما في الشكل ٣-١٦. فيقوم اللاكتيز بتحليل اللاكتوز في الحليب إلى الجلوكوز والجالاكتوز، فيصبح الحليب خاليًا من اللاكتوز، حيث يستخدم في صنع ألبان مخصّصة للأشخاص الذين لا يستطيعون هضم اللاكتوز. للإنزيمات المثبتة ميزات عديدة وواضحة مقارنة بالإنزيمات غير المثبتة. فعند مزج اللاكتيز (غير المثبت) مع الحليب، سيصعب الحصول على اللاكتيز مرة أخرى (لغرض استخدامه)، وسيكون الحليب ملوثًا بالإنزيمات؛ بينما يؤمّن استخدام الإنزيمات المثبتة الحفاظ على الإنزيمات وإعادة استخدامها، والحصول على منتج خالٍ من الإنزيمات (غير ملوّث بها). (كتاب الطالب ص ١١٧–١١٨)',
+        'ميزة أخرى للإنزيمات المثبتة تتمثّل في أنها أكثر تحمّلًا لتقلّب درجات الحرارة، ولتغيّر الرقم الهيدروجيني pH مقارنة بالإنزيمات في محاليل (غير المثبتة). وربّما يعود هذا إلى أن جزيئاتها مترسّخة بقوة عبر الألجينات المثبتة فيها، وبالتالي فإن طبيعتها لا تتغير بسهولة. وقد يكون السبب أيضًا أنّ الجزيئات الموجودة في الكريات (الحبيبات) ليست مكشوفة بالكامل لتقلّبات الحرارة والرقم الهيدروجيني pH. (كتاب الطالب ص ١١٨)'
+      ],
+      build(i) { return WRAP(i === 1 ? IM.build1() : IM.build0()); }
+    }
+  });
+})();
