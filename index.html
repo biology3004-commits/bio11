@@ -34,6 +34,8 @@
 <script src="data/g11_diagrams.js"></script>
 <script src="data/g11_content.js"></script>
 <script src="data/g11_labs.js"></script>
+<script src="data/g11_games.js"></script>
+<script src="data/g11_assistant.js"></script>
 <!-- Google tag (gtag.js) -->
 <!-- G11: لا تحليلات بعد -->
 <meta charset="UTF-8">
@@ -3514,7 +3516,7 @@ body :not(.header *)[style*="font-size:0.74rem"] { font-size: 0.78rem !important
       });
     })();
     </script>
-    <span id="appVersionTag" dir="ltr" title="تاريخ الإصدار · رقم النشر (يطابق CACHE_VERSION في sw.js)" style="background:#eceff1;color:#37474f;padding:3px 9px;border-radius:6px;font-size:0.68rem;font-weight:600;">v2026.10.24 · 12</span>
+    <span id="appVersionTag" dir="ltr" title="تاريخ الإصدار · رقم النشر (يطابق CACHE_VERSION في sw.js)" style="background:#eceff1;color:#37474f;padding:3px 9px;border-radius:6px;font-size:0.68rem;font-weight:600;">v2026.10.24 · 13</span>
     <span id="streakBadge" title="" style="display:none;background:linear-gradient(135deg,#d84315,#f4511e);color:white;padding:3px 9px;border-radius:6px;font-size:0.7rem;font-weight:700;align-items:center;gap:5px;cursor:pointer;box-shadow:0 2px 6px rgba(216,67,21,0.3);" onclick="document.querySelector('.nav-tab[data-tab=&quot;assistant&quot;]').click(); setTimeout(() => kbAskChip('تحدِّي اليوم'), 200);">
       <span style="font-size:0.85rem;line-height:1;">🔥</span>
       <span class="streak-value">0</span>
@@ -3810,7 +3812,6 @@ body :not(.header *)[style*="font-size:0.74rem"] { font-size: 0.78rem !important
           <option value="mcq">اختيار من متعدد</option>
           <option value="short">إجابة قصيرة</option>
           <option value="essay">إجابة طويلة</option>
-          <option value="enrich">إثرائي</option>
         </select>
       </div>
     </div>
@@ -5952,7 +5953,7 @@ function setSemester(sem) {
   if (metaDesc) metaDesc.setAttribute('content',
     `ألعاب تعليمية ومولّد أسئلة لمادة الأحياء — الصف الحادي عشر، ${semName}، سلطنة عُمان`);
   // Update assistant quick-chips based on semester
-  const chipsS1 = ['تركيب الخليّة بدائيّة النواة','مقدار التكبير','الرابطة الببتيديّة','اختبار بندكت'];
+  const chipsS1 = ['تركيب البكتيريا','مقدار التكبير','الرابطة الببتيديّة','اختبار بندكت'];
   const chipsS2 = ['مراحل التنفس الهوائي','الفسفرة الضوئية','الأجسام المضادة','التنوع البيولوجي'];
   const chips = (sem === 'S1') ? chipsS1 : chipsS2;
   ['chip1','chip2','chip3','chip4'].forEach((id, i) => {
@@ -6872,7 +6873,7 @@ function loadPreparation() {
 
   container.innerHTML = `
     <div style="background:var(--bg); padding:16px; border-radius:10px; margin-bottom:16px; text-align:center;">
-      <strong>المديرية العامة للتربية والتعليم بمحافظة ظفار</strong> | مدرسة ظفار للبنين | الأحياء - الصف الحادي عشر
+      <strong>المديرية العامة للتعليم بمحافظة ظفار</strong> | مدرسة ظفار للبنين | الأحياء - الصف الحادي عشر
     </div>
     <table class="prep-table">
       <tr><th>الوحدة / الدرس</th><td>الوحدة ${unit.id === 6 ? 'السادسة' : unit.id === 7 ? 'السابعة' : unit.id === 8 ? 'الثامنة' : 'التاسعة'}: ${unit.name} | الموضوع ${lesson.id}: ${lesson.title}</td></tr>
@@ -7532,7 +7533,7 @@ function detectIntent(rawQuery) {
   if (/ماذا (سيحدث|يحدث|حدث) (لو|إذا|اذا|عند)|ماذا لو|في حال|في حاله|في حالة|اذا توقف|اذا منع|اذا فشل|لو افترضنا|ماذا تتوقع/.test(q)) return 'whatif';
   if (/^(و|ف)?(لماذا|ليش|كيف ذلك|اعطني مثال|اضرب لي مثال|مثال اخر|اشرح اكثر|وضح اكثر|لماذا|واين|وكيف|كذلك)/.test(q)) return 'follow-up';
   if (/قارن|الفرق بين|فرق بين|مقارنه|مقارنة/.test(q)) return 'compare';
-  if (/اختبرني|اختبار|سؤال عن|سؤال على|اعطني سؤال|تدرب|اسالني/.test(q)) return 'quiz';
+  if (/اختبرني|اختبار(?! (ال)?(بندكت|بيوريت|يود|مستحلب|نشا|سكر|بروتين|دهون))|سؤال عن|سؤال على|اعطني سؤال|تدرب|اسالني/.test(q)) return 'quiz';
   if (/اذكر|عدّد|عدد|قائمه|قائمة|ما المراحل|ما هي المراحل|ما هي العناصر|ما هي الانواع|ما الانواع|ما هي الاجزاء/.test(q)) return 'list';
   if (/^(اشرح|فسر|وضح|بين|كيف يحدث|كيف يعمل|كيف تتم|كيف يتم|ماذا يحدث|ماذا يتم|كيف نعرف|كيف يمكن)/.test(q)) return 'explain';
   if (/طبق|طبّق|تطبيق|في الحياه|في الحياة|في الواقع|مثال يومي|تشبيه|اضرب مثال/.test(q)) return 'apply';
@@ -7568,6 +7569,7 @@ const _ordinalWords = {
 // Returns 1-based index, or null if no reference found.
 function _detectOrdinalRef(qNorm) {
   if (!qNorm) return null;
+  if (/(^|\s)(ال)?(وحده|درس|فصل|حصه)\s+\S+/.test(qNorm)) return null; // G11: «الوحدة الثالثة» ليست «العنصر الثالث»
   for (const k of Object.keys(_ordinalWords)) {
     const re = new RegExp('(?:^|[\\s])' + k + '(?=$|[\\s؟?!.])');
     if (re.test(qNorm)) return _ordinalWords[k];
@@ -9175,7 +9177,7 @@ function _inferUnitRaw(qNorm) {
   if (!qNorm) return null;
   // الفصل النشط أوَّلاً، ثمَّ الآخر (ليُستعمل في «هذا من الفصل الآخر»)
   const s1 = _inferUnitS1(qNorm);
-  if (_currentSemester === 'S1') return s1 || _inferUnitS2Distinct(qNorm);
+  if (_currentSemester === 'S1') return _inferUnitS2Distinct(qNorm) || s1; // G11: مواضيع خارج المنهج أوَّلاً (لا ترد في المنصَّة أصلاً)
   const s2 = _inferUnitS2(qNorm);
   return s2 || s1;
 }
@@ -10178,6 +10180,8 @@ function formatLocalResponse(results, query, intent) {
       setTimeout(() => kbOpenInfographic(list[u]), 500);
       return `<strong>🖼 ملخَّص الوحدة ${u}</strong><br><div style="font-size:0.85rem;color:#555;margin:6px 0 10px;">الوحدة كلُّها في صفحة A4 واحدة بنصِّ الكتاب — فُتحت في العارض، وفيه زرُّ طباعة PDF.</div>${card(u)}`;
     }
+    const _uIGs = (typeof infographics !== 'undefined') ? infographics.filter(g => !u || (g.units || []).includes(u)) : []; // G11: لا ملخَّص وحدة بصفحة واحدة بعدُ ← انفوجرافيك الوحدة
+    if (!Object.keys(list).length && _uIGs.length) return `<strong>🖼 انفوجرافيك ${u ? 'الوحدة ' + u : 'الوحدات'}</strong><br><div style="font-size:0.85rem;color:#555;margin:6px 0 10px;">لا يوجد ملخَّص للوحدة في صفحة واحدة؛ هذه صفحات الانفوجرافيك بنصِّ الكتاب (${_uIGs.length}):</div><div style="display:flex;flex-wrap:wrap;gap:6px;">${_uIGs.map(g => `<button type="button" class="kb-action" style="background:#ad1457;" onclick="kbOpenInfographic('${g.id}')">🖼 ${g.title}</button>`).join('')}</div>`;
     return `<strong>🖼 ملخَّصات الوحدات</strong><br><div style="font-size:0.85rem;color:#555;margin:6px 0 10px;">اختر الوحدة التي تريد ملخَّصها:</div><div style="display:flex;flex-wrap:wrap;gap:6px;">${Object.keys(list).map(card).join('')}</div>`;
   }
   if (intent === 'adaptive-quiz') {
@@ -10212,12 +10216,12 @@ function formatLocalResponse(results, query, intent) {
     const curName    = isS1 ? 'الفصل الدراسي الأوَّل' : 'الفصل الدراسي الثاني';
     const curRange   = isS1 ? 'الوحدات ١-٤' : 'الوحدات ٥-٨';
     return `<div style="background:#e3f2fd;border-right:3px solid #1565c0;padding:11px 14px;border-radius:8px;line-height:1.8;">
-      📘 <strong>هذا الموضوع من ${otherName} (${otherRange}).</strong><br>
-      المساعد يبحث الآن في محتوى <strong>${curName} (${curRange})</strong> فقط، فلا تظهر مادَّة الفصل الآخر هنا.
+      📘 <strong>هذا الموضوع ليس من منهج ${curName} للصف الحادي عشر (${curRange}).</strong><br>
+      المساعد يبحث في محتوى <strong>${curName} (${curRange})</strong> فقط.
     </div><br><strong>جرِّب أحد هذه:</strong><br>` + quickChips();
   }
 
-  if (results.length === 0) {
+  if (results.length === 0 && intent !== 'quiz') { // G11: «اختبرني» وحدها ← سؤال من المنهج كلِّه لا «لم أجد»
     // Fallback ذكي متعدِّد المستويات
     let body = '';
     const closest = findClosestTerms(query, 5);
@@ -10298,8 +10302,9 @@ function formatLocalResponse(results, query, intent) {
     const cleanQ = qNorm.replace(/^(ما|من|اين|كيف|لماذا|متي|متى|اشرح|عرف|قارن|اذكر|اختبرني علي|اختبرني على|اختبرني|اختبار علي|اختبار على|سؤال علي|سؤال على|سؤال عن|تدرب علي|تدرب على|اسالني عن|اسالني)\s+/, '').trim();
     // كلمات حشو لا تساعد في التطابق الدلالي (تُولِّد ضوضاء)
     const _stopwords = new Set(['علي','على','في','من','الي','الى','عن','مع','بين','هي','هو','هذا','هذه','ذلك','تلك','هل','او','أو','كل','بعض','نحو','حول','عند','لدي','لدى']);
-    const topicTokens = cleanQ.split(/\s+/).filter(t => t.length >= 3 && !_stopwords.has(t));
-    const targetUnit = _inferUnitFromQuery(qNorm);
+    const topicTokens = cleanQ.split(/\s+/).filter(t => t.length >= 3 && !_stopwords.has(t) && !/^(اختبرني|اختبار|اسالني|سوال|سوالا|تدرب|اعطني|الوحده|وحده|الدرس)$/.test(t) && !_ordinalWords[t] && !/^\d$/.test(t)); // G11: لا كلمات الطلب ولا «الوحدة الثالثة» موضوعاً
+    const _uM = qNorm.replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d)).match(/الوحده\s+(\S+)/), _uV = _uM ? (/^\d$/.test(_uM[1]) ? +_uM[1] : _ordinalWords[_uM[1]]) : null;
+    const targetUnit = (_uV && _isActiveSemUnit(_uV)) ? _uV : _inferUnitFromQuery(qNorm);
 
     // فضِّل أسئلة _preformed (MCQ قابل للنقر) — يُمكِّن checkMCQ من التقاط الأخطاء لـ "أخطائي" وخطَّة المذاكرة
     if (typeof _getAllPreformedQuestions === 'function') {
@@ -10332,7 +10337,7 @@ function formatLocalResponse(results, query, intent) {
       // قاعدة الانتقاء: لا نلجأ للعشوائيَّة الكاملة. نختار فقط إذا:
       //   (أ) ضيَّقنا بالوحدة المستنتجة، أو
       //   (ب) طابقنا الموضوع فعلياً
-      const haveValidScope = unitWasNarrowed || topicMatched;
+      const haveValidScope = unitWasNarrowed || topicMatched || topicTokens.length === 0; // G11: «اختبرني» بلا موضوع ← MCQ عشوائي من المنهج كلِّه
       if (haveValidScope && topicFiltered.length > 0) {
         // درس قليل الأسئلة التفاعليَّة (أقل من 6): تُضاف أسئلة كتاب الطالب القصيرة من الدرس نفسه إلى وعاء الاختيار
         let pool = topicFiltered;
@@ -11422,9 +11427,10 @@ function generateQuestions() {
         if (!isCuratedMCQ(q)) return false; // strict: curated MCQs only
       } else if (qType === 'short') {
         if (q && Array.isArray(q.options)) return false;
-        if (!(t === 'original' && qLevel === 'remember')) return false;
+        if (!(t === 'original' && ((q && q.marks != null) ? q.marks <= 3 : qLevel === 'remember'))) return false; // G11: بالدرجة
       } else if (qType === 'essay') {
         if (q && Array.isArray(q.options)) return false;
+        if (q && q.marks != null && q.marks <= 3) return false; // G11: ذات الدرجات القليلة قصيرة
         if (['scenario','compare','what_if','diagram'].includes(t)) { /* OK — أسئلة مقاليَّة بطبيعتها */ }
         else if (t === 'original' && isDescriptive(q)) { /* OK */ }
         else if (!(t === 'original' && (qLevel === 'analyze' || qLevel === 'understand'))) return false;
@@ -11954,7 +11960,7 @@ function generateFinalExam70() {
 
     // محاولات عشوائيَّة متعدِّدة، وتُعتمد أقربها إلى المواصفات (تتوقَّف عند المطابقة التامَّة)
     let best = null;
-    for (let t = 0; t < 120; t++) {
+    for (let t = 0; t < 800; t++) {
       const a = buildAttempt(AO1_NONLOW_CAPS[t < 60 ? 0 : 1]);
       const items = a.mcqSelected.length + a.shortSelected.length + a.longSelected.length;
       const total = a.mcqSelected.length * slots.mcq.mark + a.shortMarks.reduce((x, y) => x + y, 0) + a.longMarks.reduce((x, y) => x + y, 0);
@@ -11962,7 +11968,7 @@ function generateFinalExam70() {
       const specDev = Math.abs(a.diffGot.L - DIFF_TARGET.L) + Math.abs(a.diffGot.M - DIFF_TARGET.M) + Math.abs(a.diffGot.H - DIFF_TARGET.H) + Math.abs(a.ao1Marks - AO1_TARGET);
       a.score = (total !== 60 ? 1000 : 0) + ((items < 30 || items > 40) ? 100 : 0) + 10 * specDev + unitDev;
       if (!best || a.score < best.score) best = a;
-      if (best.score <= 4) break; // الصعوبة وAO مطابقان، والوحدات لا تنحرف مجتمعةً بأكثر من ٤ درجات
+      if (best.score <= 0) break; // الصعوبة وAO مطابقان، والوحدات لا تنحرف مجتمعةً بأكثر من ٤ درجات
     }
     const { mcqSelected, shortSelected, shortMarks, longSelected, longMarks } = best;
     const diffMarks = best.diffGot;
@@ -12000,7 +12006,7 @@ function generateFinalExam70() {
           <div class="exam-ministry-text">
             <strong>سلطنة عُمان</strong>
             وزارة التعليم<br>
-            المديريَّة العامَّة للتربية والتعليم بمحافظة ظفار<br>
+            المديريَّة العامَّة للتعليم بمحافظة ظفار<br>
             مدرسة ظفار للبنين
           </div>
           <div class="exam-school-logo">
