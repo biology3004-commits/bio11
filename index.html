@@ -3516,7 +3516,7 @@ body :not(.header *)[style*="font-size:0.74rem"] { font-size: 0.78rem !important
       });
     })();
     </script>
-    <span id="appVersionTag" dir="ltr" title="تاريخ الإصدار · رقم النشر (يطابق CACHE_VERSION في sw.js)" style="background:#eceff1;color:#37474f;padding:3px 9px;border-radius:6px;font-size:0.68rem;font-weight:600;">v2026.10.25 · 14</span>
+    <span id="appVersionTag" dir="ltr" title="تاريخ الإصدار · رقم النشر (يطابق CACHE_VERSION في sw.js)" style="background:#eceff1;color:#37474f;padding:3px 9px;border-radius:6px;font-size:0.68rem;font-weight:600;">v2026.10.25 · 15</span>
     <span id="streakBadge" title="" style="display:none;background:linear-gradient(135deg,#d84315,#f4511e);color:white;padding:3px 9px;border-radius:6px;font-size:0.7rem;font-weight:700;align-items:center;gap:5px;cursor:pointer;box-shadow:0 2px 6px rgba(216,67,21,0.3);" onclick="document.querySelector('.nav-tab[data-tab=&quot;assistant&quot;]').click(); setTimeout(() => kbAskChip('تحدِّي اليوم'), 200);">
       <span style="font-size:0.85rem;line-height:1;">🔥</span>
       <span class="streak-value">0</span>
@@ -10629,19 +10629,19 @@ function sendChat() {
 
   let intent = detectIntent(msg);
   const qNorm = normalizeArabic(msg);
-  let effectiveQuery = msg;
+  let effectiveQuery = msg, _isFU = false; // G11: _isFU = سؤال متابعة دُمج بآخر موضوع
   // 1) سؤال متابعة صريح ("لماذا؟" / "اشرح أكثر") → ادمج آخر موضوع تلقائياً
   if (intent === 'follow-up' && chatContext.lastTopic) {
-    effectiveQuery = chatContext.lastTopic + ' ' + msg;
+    effectiveQuery = chatContext.lastTopic + ' ' + msg; _isFU = true;
   }
   // 2) كشف الضمائر/الإشارة في وسط السؤال (هو/هي/ذلك/هذا/هذه/تلك/فيه)
   // مثال: "كيف يحدث؟" بعد سؤال عن "التحلل السكري" → كأنك سألت "كيف يحدث التحلل السكري؟"
   else if (chatContext.lastTopic && /\b(هو|هي|هما|هم|هن|ذلك|هذا|هذه|تلك|اولئك|فيه|فيها|عنه|عنها|له|لها|به|بها)\b/.test(qNorm) && msg.split(/\s+/).filter(w => w.length >= 3).length <= 4) {
-    effectiveQuery = chatContext.lastTopic + ' ' + msg;
+    effectiveQuery = chatContext.lastTopic + ' ' + msg; _isFU = true;
   }
   // 3) سؤال قصير كلُّه كلمات عامَّة («كيف يحدث؟»، «ما أهميته؟»، «أين يوجد؟») → يخصُّ آخر موضوع
   else if (chatContext.lastTopic && _isBareFollowUp(qNorm)) {
-    effectiveQuery = chatContext.lastTopic + ' ' + msg;
+    effectiveQuery = chatContext.lastTopic + ' ' + msg; _isFU = true;
   }
   // ملاحظة: تمَّ حذف "الدمج التلقائي للكلمة الواحدة مع آخر موضوع"
   // كان يخلط مفاهيم منفصلة (مثل: بحث عن "الانقراض" بعد سؤال عن التنفُّس).
@@ -10712,16 +10712,17 @@ function sendChat() {
       localResults = localSmartSearch(effectiveQuery);
       // «عرِّف X» / «ما هو X؟»: المصطلح الذي يبدأ اسمه بما كتبه الطالب يُقدَّم على أسئلة البنك
       if (intent === 'define' && typeof _preferTermForDefine === 'function') localResults = _preferTermForDefine(localResults, effectiveQuery);
+      if (_isFU && !_fuItem && typeof _g11FollowUpPick === 'function') localResults = _g11FollowUpPick(localResults, chatContext, msg); // G11: «لماذا/كيف» ← سؤال من البنك لا التعريف نفسه
       if (_fuItem) localResults = [_fuItem].concat(localResults.filter(r => r !== _fuItem && r.q !== _fuItem.q));
       response = formatLocalResponse(localResults, effectiveQuery, intent);
       if (localResults.length > 0) {
         const top = localResults[0];
         chatContext.lastResults = localResults;
-        chatContext.shownKeys = new Set([_resultKey(top)]); // reset on new search
+        if (_isFU && chatContext.shownKeys) chatContext.shownKeys.add(_resultKey(top)); else chatContext.shownKeys = new Set([_resultKey(top)]); // G11: المتابعة لا تكرِّر ما عُرض
         chatContext.lastIntent = intent;
         chatContext.lastUnit = top.unit || null;
         chatContext.lastLesson = top.lesson || top.id || null;
-        chatContext.lastTopic = top.ar || top.title || (top.q ? top.q.substring(0, 60) : msg);
+        if (!_isFU) chatContext.lastTopic = top.ar || top.title || (top.q ? top.q.substring(0, 60) : msg); // G11: «لماذا؟» الثانية تبقى على الموضوع نفسه
       }
     }
     chatContext.history.push({ user: msg, intent, ts: Date.now() });

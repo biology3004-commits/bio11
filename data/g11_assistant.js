@@ -37,4 +37,39 @@
         'hiv', 'ايدز', 'بنسلين', 'ساركومير', 'نظام ضويي', 'الثغور'],
     7: [], 8: [], 9: [],
   };
+
+  // أسئلة الامتحانات الوزاريَّة على الشاشة: تعليمة الورقة «(ظلّل أمام الإجابة الصحيحة)» تُحذف، و«ظلّل البديل/العبارة/الشكل…» تصير «اختر …».
+  // التعديل في الذاكرة عند التحميل فقط — المصدر في data/g11_exams_q.js يبقى حرفيّاً (2026-10-25).
+  Object.values(G.extendedQuestions || {}).forEach(list => (list || []).forEach(q => {
+    if (!q || !q._pastExam || typeof q.q !== 'string') return;
+    q.q = q.q.replace(/\s*\(ظلّ?ل\s+(?:أمام\s+)?ال[إا]جابة الصحيحة\)/g, '').replace(/(^|[\s.)\n])ظلّ?ل(?=\s)/g, '$1اختر');
+  }));
+
+  // سؤال متابعة («لماذا؟»، «كيف يحدث؟») بعد موضوع: سؤال من البنك يسأل «لماذا/كيف/فسّر…» عن الموضوع نفسه
+  // يُقدَّم على تعريف المصطلح (كان المساعد يعيد التعريف). يستدعيه sendChat (رقعة build_engine.py).
+  window._g11FollowUpPick = function (results, ctx, msg) {
+    try {
+      const N = window.normalizeArabic, KB = window.knowledgeBase || (typeof knowledgeBase !== 'undefined' ? knowledgeBase : []);
+      const core = N(ctx.lastTopic || '').replace(/\(.*?\)/g, ' ').split(/\s+/)
+        .map(w => w.replace(/^(و|ف)?(ب|ل|ك)?ال(?=\S{3})/, '')).filter(w => w.length >= 3);
+      if (!core.length) return results;
+      const m = N(msg), why = /لماذا|ليش|علل|سبب|فسر/.test(m), E = '(?=\\s|$|[؟?،,:.])';
+      const WANT = new RegExp('(^|\\s)(' + (why ? 'لماذا|فسر|علل|ما سبب|اشرح سبب' : 'كيف|اشرح|صف|وضح|فسر|ماذا يحدث|ما الذي يحدث') + ')' + E);
+      const plain = q => N(typeof _plainQA === 'function' ? _plainQA(q) : q);
+      const shown = ctx.shownKeys || new Set(), key = i => (typeof _resultKey === 'function' ? _resultKey(i) : i.q);
+      // كلُّ كلمات الموضوع: الطويلة بجذر تقريبي («سرطانات» ↔ «السرطان»)، والقصيرة كلمةً كاملة («نشا» لا «النشاط»)
+      const has = (t, w) => w.length <= 3 ? new RegExp('(^|\\s)(و|ف)?(ب|ل|ك)?(ال)?' + w + '(?=\\s|$|[^\u0621-\u064A])').test(t) : t.includes(w.slice(0, Math.max(4, w.length - 2)));
+      const all = t => core.every(w => has(t, w));
+      const base = KB.filter(i => i.type === 'qa' && !i.fig && typeof i.a === 'string' && i.a.length > 20 && !shown.has(key(i))
+        && !/الشكل|التمثيل البياني|الجدول|الرسم التخطيطي|الصوره/.test(plain(i.q)) && WANT.test(plain(i.q)));
+      // الموضوع في نصِّ السؤال أوَّلاً، ثمَّ في السؤال والإجابة معاً
+      let pool = base.filter(i => all(plain(i.q)));
+      if (!pool.length) pool = base.filter(i => all(plain(i.q) + ' ' + N(i.a)));
+      if (!pool.length) return results;
+      const score = i => (String(i.lesson || '') === String(ctx.lastLesson || '') ? 1 : 0) - plain(i.q).length / 1000;
+      pool.sort((x, y) => score(y) - score(x));
+      const pick = pool[0];
+      return [pick].concat(results.filter(r => r !== pick && r.q !== pick.q));
+    } catch (e) { return results; }
+  };
 })();
