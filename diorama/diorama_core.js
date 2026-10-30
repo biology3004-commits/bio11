@@ -28,6 +28,8 @@ window.DioramaCore = (function () {
   const Q = new URLSearchParams(location.search);
   const isPhone = () => Q.has('m') ? Q.get('m') === '1' : (matchMedia('(max-width: 700px)').matches && !Q.has('shot'));
   let PHONE = isPhone();
+  const SHOT = Q.has('shot');
+  const LOW = !SHOT && (PHONE || matchMedia('(pointer: coarse)').matches);   // الهواتف والأجهزة اللوحيَّة: أخفُّ رسم وأقلُّ إطارات
   const V = (x, y, z) => new THREE.Vector3(x, y, z);
   const sm = t => { t = Math.min(1, Math.max(0, t)); return t * t * (3 - 2 * t); };
   const ease = t => t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
@@ -39,6 +41,9 @@ window.DioramaCore = (function () {
   let dEl = 0, dAz = 0;                                                // تدوير يدوي أثناء العرض (بالراديان)
   let auto = false, autoT0 = null, autoMs = 0;                         // التشغيل التلقائي: مؤقِّت الانتظار بعد كل خطوة
   const PACE = Q.has('pace') ? Math.min(4, Math.max(0.3, +Q.get('pace') || 1)) : 1;
+  // الرسم عند الحاجة: لا يُعاد رسم المشهد إلَّا إذا تغيَّر شيء (حركة، كاميرا، خطوة، حجم)
+  let dirty = true, shadowDirty = true, onScreen = true, lastFrame = 0, lastIdle = 0, lastRender = 0, lastShadow = 0, curRatio = 0;
+  const IDLE_MS = LOW ? 50 : 33, TWEEN_MS = LOW ? 30 : 0, BEAT_MS = 2000, SHADOW_IDLE_MS = 500;
 
   function rod(a, b, r, mat, parent) {
     const d = new THREE.Vector3().subVectors(b, a), L = d.length(); if (L < 1e-4) return null;
@@ -72,10 +77,10 @@ window.DioramaCore = (function () {
   }
 
   function setupScene() {
-    renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('gl'), antialias: true, alpha: true, preserveDrawingBuffer: true });
-    renderer.setPixelRatio(Q.has('shot') ? 2 : Math.min(devicePixelRatio, 2));
+    renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('gl'), antialias: !LOW, alpha: true, preserveDrawingBuffer: SHOT });
+    applyRes(); if (!curRatio) { curRatio = LOW ? 1 : Math.min(devicePixelRatio, 2); renderer.setPixelRatio(curRatio); }
     renderer.setSize(W, H, false);
-    renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.shadowMap.enabled = true; renderer.shadowMap.type = LOW ? THREE.PCFShadowMap : THREE.PCFSoftShadowMap; renderer.shadowMap.autoUpdate = false;
     renderer.outputEncoding = THREE.sRGBEncoding;
     scene = new THREE.Scene();
     const c = Object.assign({}, D.camera || {}); if (Q.has('el')) c.elevation = +Q.get('el'); if (Q.has('az')) c.azimuth = +Q.get('az');
@@ -87,7 +92,7 @@ window.DioramaCore = (function () {
     CAM0 = { VH, C: C.clone(), Dist, EL, AZ };
     scene.add(new THREE.HemisphereLight(0xffffff, 0xaab6c4, 0.95));
     const sun = new THREE.DirectionalLight(0xffffff, 1.05); sun.position.set(-6, 22, 12); sun.castShadow = true;
-    sun.shadow.mapSize.set(2048, 2048); Object.assign(sun.shadow.camera, { left: -16, right: 16, top: 16, bottom: -16, near: 1, far: 60 });
+    sun.shadow.mapSize.set(LOW ? 1024 : 2048, LOW ? 1024 : 2048); Object.assign(sun.shadow.camera, { left: -16, right: 16, top: 16, bottom: -16, near: 1, far: 60 });
     sun.shadow.radius = 5; sun.shadow.bias = -0.0004; scene.add(sun);
     const fill = new THREE.DirectionalLight(0xffffff, 0.22); fill.position.set(14, 8, -6); scene.add(fill);
     if (D.base !== false) {
@@ -100,6 +105,15 @@ window.DioramaCore = (function () {
             mesh: (g, m, p, parent) => { const o = new THREE.Mesh(g, m); if (p) o.position.copy(p); o.castShadow = o.receiveShadow = true; (parent || scene).add(o); return o; } };
   }
 
+  // دقَّة لوحة الرسم بحسب حجمها الفعلي على الشاشة (المسرح 1600×900 يُصغَّر بـ transform، فلا فائدة من بكسلات لا تُرى)
+  function applyRes() {
+    if (!renderer) return;
+    const shown = document.getElementById('gl').getBoundingClientRect().width; if (!SHOT && shown < 10) return;
+    const dpr = Math.min(devicePixelRatio || 1, 2), r = SHOT ? 2 : Math.min(LOW ? 1.25 : 2, Math.max(0.6, shown * dpr / W));
+    if (Math.abs(r - curRatio) < 0.05) return;
+    curRatio = r; renderer.setPixelRatio(r); dirty = true;
+  }
+
   // الكاميرا: التقريب نحو نقطة التركيز (مع تتبُّعها كل إطار) والعودة إلى الإطار الكامل
   function applyCamera() {
     const z = Math.max(0.5, S.zoom || 1);
@@ -109,7 +123,7 @@ window.DioramaCore = (function () {
     const EL = Math.min(1.45, Math.max(0.12, (S.el !== undefined ? S.el * Math.PI / 180 : CAM0.EL) + dEl)), AZ = (S.az !== undefined ? S.az * Math.PI / 180 : CAM0.AZ) + dAz;
     const key = z * 1e6 + EL * 1e3 + AZ;
     if (camC && camZ === key && camC.distanceToSquared(C) < 1e-8) return;
-    camZ = key; camC = C.clone();
+    camZ = key; camC = C.clone(); dirty = true;
     const VH = CAM0.VH / (z * (PHONE ? 1.35 : 1)), VW = VH * W / H;
     cam.left = -VW / 2; cam.right = VW / 2; cam.top = VH / 2; cam.bottom = -VH / 2;
     const { Dist } = CAM0;
@@ -118,7 +132,7 @@ window.DioramaCore = (function () {
     const lg = document.getElementById('legend'); if (lg) lg.style.opacity = z > 1.35 ? 0.18 : 1;
   }
   const proj = v => { const p = v.clone().project(cam); return [(p.x + 1) / 2 * W, (1 - p.y) / 2 * H]; };
-  function rebuild() { ctx.dyn.children.forEach(o => { if (o.userData.own) o.geometry.dispose(); }); ctx.dyn.clear(); D.rebuild(S, ctx); }
+  function rebuild() { ctx.dyn.children.forEach(o => { if (o.userData.own) o.geometry.dispose(); }); ctx.dyn.clear(); D.rebuild(S, ctx); dirty = shadowDirty = true; }
   function setPills(k) {
     const box = document.getElementById('labels'); box.innerHTML = '';
     pills = (D.STEPS[k].pills || []).map(([txt, c, f, dx, dy]) => { const e = document.createElement('div'); e.className = 'pill'; e.style.setProperty('--c', c); e.innerHTML = txt; e.style.opacity = 0; box.appendChild(e); return { e, c, f, dx: dx || 0, dy: dy || 0 }; });
@@ -142,7 +156,7 @@ window.DioramaCore = (function () {
     for (const [n, p2] of [['bNext', 'bPrev'], ['mNext', 'mPrev']]) { document.getElementById(n).disabled = step >= D.STEPS.length - 1; document.getElementById(p2).disabled = step <= 0; }
     try { parent && parent !== window && parent.postMessage({ diorama: D.id, step: step }, '*'); } catch (e) {}
   }
-  function settle() { S = Object.assign({}, END[step]); rebuild(); D.place(S, ctx); applyCamera(); drawOverlay(true); }
+  function settle() { S = Object.assign({}, END[step]); rebuild(); D.place(S, ctx); applyCamera(); drawOverlay(true); dirty = shadowDirty = true; }
   function go(k, animate) {
     if (k < 0 || k >= D.STEPS.length || busy) return;
     step = k; ui(); setPills(k); autoT0 = null; setBars(0);
@@ -159,21 +173,26 @@ window.DioramaCore = (function () {
     tw = { to, from, ms: Math.max(1, ms), t0: now, hasGeom };
   }
   function frame(now) {
+    requestAnimationFrame(frame);
+    if (!onScreen || (TWEEN_MS && now - lastFrame < TWEEN_MS)) return;
+    lastFrame = now;
     if (tw) {
       const u = Math.min(1, (now - tw.t0) / tw.ms), e = ease(u);
       for (const key in tw.to) S[key] = tw.from[key] + (tw.to[key] - tw.from[key]) * e;
       if (tw.hasGeom) rebuild(); D.place(S, ctx); applyCamera(); drawOverlay(false);
+      dirty = shadowDirty = true;
       if (u >= 1) nextTween(now);
     }
-    if (D.idle && !Q.has('shot')) D.idle(now / 1000, S, ctx, !!tw);
+    if (D.idle && !SHOT && (tw || now - lastIdle >= IDLE_MS)) { lastIdle = now; D.idle(now / 1000, S, ctx, !!tw); dirty = true; }
     if (!tw && D.focus && (S.zoom || 1) > 1) applyCamera();              // تتبُّع نقطة التركيز المتحرِّكة بالحركة الخفيفة
     if (auto && !tw) {                                                   // التشغيل التلقائي: انتظار يتناسب مع طول النص ثم الخطوة التالية (في التبويب المخفي يتوقَّف rAF فيتوقَّف العدُّ تلقائيّاً)
       if (autoT0 === null) { autoT0 = now; autoMs = autoDelay(step); }
       const u = (now - autoT0) / autoMs; setBars(Math.min(1, u));
       if (u >= 1) { autoT0 = null; if (step < D.STEPS.length - 1) go(step + 1, true); else go(0, false); }
     }
-    renderer.render(scene, cam);
-    requestAnimationFrame(frame);
+    if (!SHOT && !dirty && now - lastRender < BEAT_MS) return;
+    if (SHOT || shadowDirty || (D.idle && now - lastShadow > SHADOW_IDLE_MS)) { renderer.shadowMap.needsUpdate = true; lastShadow = now; }
+    renderer.render(scene, cam); dirty = shadowDirty = false; lastRender = now;
   }
 
   function autoDelay(k) {
@@ -203,11 +222,16 @@ window.DioramaCore = (function () {
     setPhone();
     const fit = () => {
       setPhone();
-      if (PHONE) { const s = innerWidth / W; stage.style.transform = `scale(${s})`; const wrap = document.getElementById('wrap'); wrap.style.height = (H * s) + 'px'; wrap.style.overflow = 'hidden'; return; }
+      if (PHONE) { const s = innerWidth / W; stage.style.transform = `scale(${s})`; const wrap = document.getElementById('wrap'); wrap.style.height = (H * s) + 'px'; wrap.style.overflow = 'hidden'; applyRes(); return; }
       const wrap = document.getElementById('wrap'); wrap.style.height = ''; wrap.style.overflow = '';
       const s = Math.min(innerWidth / W, innerHeight / H); stage.style.transform = `scale(${s})`;
       camZ = -1; if (S) { applyCamera(); drawOverlay(!tw); }
+      applyRes();
     }; addEventListener('resize', fit); fit();
+    // خارج الشاشة لا رسم ولا عدَّ للتشغيل التلقائي؛ وعند العودة يُعاد الرسم
+    const wake = () => { dirty = shadowDirty = true; autoT0 = null; };
+    if (!SHOT && 'IntersectionObserver' in window) new IntersectionObserver(es => { onScreen = es[es.length - 1].isIntersecting; if (onScreen) { applyRes(); wake(); } }).observe(document.documentElement);
+    document.addEventListener('visibilitychange', wake); addEventListener('pageshow', wake);
     if (D.BASE.zoom === undefined) D.BASE.zoom = 1;
     D.noGeom = (D.noGeom || []).concat(['zoom', 'el', 'az']);
     setupScene(); D.setup(ctx);
