@@ -15,6 +15,10 @@
   const BATH_R = 1.35, BATH_H = 3.4, WATER_H = 2.4;       // الكأس والماء
   const BATH_SLOT = i => { const a = (i - 1) / 7 * 2 * Math.PI; return [BATH.x + 0.78 * Math.cos(a), BATH.z + 0.78 * Math.sin(a)]; };
   const BATH_Y = (BATH.y + 0.4 + TUBE_H / 2) - HOME_Y;    // إزاحة y للأنبوبة داخل الكأس (قاعها فوق قاع الكأس بـ 0.4)
+  const BATH_TOP = BATH.y + BATH_H;                        // حافَّة الكأس
+  const LIFT_Y = BATH_TOP - HOME_Y + TUBE_H / 2 + 0.15;   // إزاحة y التي يكون عندها قاع الأنبوبة فوق الحافَّة (للدخول والخروج من الفوَّهة)
+  const STOCK = i => V(HOME_X(i), TABLE_Y, -2.4);         // أوعية محاليل الجلوكوز السبعة خلف الحامل
+  const STOCK_R = 0.3, STOCK_H = 1.0;
   const BEN = V(-2.6, TABLE_Y, 2.3), WASH = V(-2.6, TABLE_Y, -1.6);   // قاعدتا كأس بندكت 50 mL وكأس الغسل
   const BEN_R = 0.55, BEN_H = 1.2, WASH_R = 0.6, WASH_H = 1.3;
   const PIP_Y = HOME_Y + TUBE_H / 2 + 0.55;               // ارتفاع طرف الماصَّة فوق الأنابيب
@@ -34,11 +38,14 @@
     LADDER, FINAL, MAXSTEP, TUBE_H,
     colorFor(i, c, b) {
       if (b <= 0) return new THREE.Color(GLUCOSE);
+      const fin = i === 7 ? new THREE.Color('#f2c414').lerp(new THREE.Color('#4e9a3c'), 0.5) : new THREE.Color(FINAL[i - 1]);
       let col;
-      if (c >= 1) col = i === 7 ? new THREE.Color('#f2c414').lerp(new THREE.Color('#4e9a3c'), 0.5) : new THREE.Color(FINAL[i - 1]);
+      if (c >= 1) col = fin;
       else {
         const pos = Math.max(0, c) * MAXSTEP[i - 1], k = Math.min(LADDER.length - 2, Math.floor(pos)), u = pos - k;
         col = new THREE.Color(LADDER[k]).lerp(new THREE.Color(LADDER[k + 1]), u);
+        const w = Math.min(1, Math.max(0, (c - 0.7) / 0.3));          // الثلث الأخير: مزج متَّصل نحو لون الجدول ٢-٢ (لا قفزة)
+        col.lerp(fin, w);
       }
       return b >= 1 ? col : new THREE.Color(GLUCOSE).lerp(col, b);
     },
@@ -50,25 +57,25 @@
   const tubeKeys = (k, val) => { const o = {}; for (let i = 1; i <= 7; i++) o[k + i] = val; return o; };
   // الخطوة 2: الماصَّة تنقل 9 mL إلى كلِّ أنبوبة وتُغسل بين كلِّ نقلين
   const seqGlucose = () => {
-    const q = [[{ '!ph': 1, '!px': WASH.x, '!py': PIP_Y, '!pz': WASH.z, '!pf': 0 }, 0]];
+    const q = [[{ '!ph': 1, '!pc': 0, '!px': WASH.x, '!py': PIP_Y, '!pz': WASH.z, '!pf': 0 }, 0]];
     for (let i = 1; i <= 7; i++) {
-      q.push([{ pf: 1 }, 250], [{ px: HOME_X(i), pz: 0 }, 350], [{ ['v' + i]: 9, pf: 0 }, 600]);
+      const st = STOCK(i);
+      q.push([{ px: st.x, pz: st.z }, 350], [{ py: TABLE_Y + 0.45 }, 150], [{ pf: 1 }, 220], [{ py: PIP_Y }, 150], [{ px: HOME_X(i), pz: 0 }, 350], [{ ['v' + i]: 9, pf: 0 }, 600]);
       if (i < 7) q.push([{ px: WASH.x, pz: WASH.z }, 350], [{ py: PIP_FILL_Y, pf: 0.4 }, 180], [{ py: PIP_Y, pf: 0 }, 180]);
     }
     return q;
   };
   // الخطوة 3: 5 mL من محلول بندكت إلى كلِّ أنبوبة
   const seqBenedict = () => {
-    const q = [];
+    const q = [[{ '!pc': 1 }, 0]];
     for (let i = 1; i <= 7; i++) q.push([{ px: BEN.x, pz: BEN.z, py: PIP_FILL_Y }, 350], [{ pf: 1 }, 200], [{ py: PIP_Y }, 150], [{ px: HOME_X(i), pz: 0 }, 350], [{ ['v' + i]: 14, ['b' + i]: 1, pf: 0 }, 550]);
     q.push([{ px: WASH.x, pz: WASH.z }, 300], [{ '!ph': 0 }, 0]);
     return q;
   };
   // الخطوة 4: الأنابيب إلى الحمَّام ثمَّ خمس دقائق تسخين
   const seqHeat = () => {
-    const to = {}; for (let i = 1; i <= 7; i++) { const [bx, bz] = BATH_SLOT(i); to['x' + i] = bx - HOME_X(i); to['z' + i] = bz; to['y' + i] = BATH_Y + 1.2; }
-    const down = {}; for (let i = 1; i <= 7; i++) down['y' + i] = BATH_Y;
-    return [[to, 1400], [down, 700], [Object.assign({ t: 5 }, tubeKeys('c', 1)), 4500]];
+    const to = {}; for (let i = 1; i <= 7; i++) { const [bx, bz] = BATH_SLOT(i); to['x' + i] = bx - HOME_X(i); to['z' + i] = bz; }
+    return [[tubeKeys('y', LIFT_Y), 900], [to, 1200], [tubeKeys('y', BATH_Y), 800], [Object.assign({ t: 5 }, tubeKeys('c', 1)), 4500]];
   };
   // الخطوة 5: إطفاء الموقد وإخراج الأنابيب بالماسك إلى الحامل بالترتيب
   const seqOut = () => {
@@ -76,16 +83,16 @@
     for (let i = 1; i <= 7; i++) {
       const [bx, bz] = BATH_SLOT(i);
       q.push([{ hx: bx, hz: bz, hy: HOME_Y + BATH_Y + 0.5, hg: 0 }, 260], [{ hg: 1 }, 100],
-             [{ ['y' + i]: BATH_Y + 1.4, hy: HOME_Y + BATH_Y + 1.9 }, 260],
+             [{ ['y' + i]: LIFT_Y, hy: HOME_Y + LIFT_Y + 0.5 }, 320],
              [{ ['x' + i]: 0, ['z' + i]: 0, hx: HOME_X(i), hz: 0 }, 380],
-             [{ ['y' + i]: 0, hy: HOME_Y + 0.5 }, 220], [{ hg: 0 }, 80]);
+             [{ ['y' + i]: 0, hy: HOME_Y + 0.5 }, 260], [{ hg: 0 }, 80]);
     }
     q.push([{ hx: HOLDER_REST.x, hy: HOLDER_REST.y, hz: HOLDER_REST.z }, 400]);
     return q;
   };
 
   const BASE = Object.assign(
-    { flame: 0, bubbles: 0, t: 0, u: 0, fo: 0, zoom: 1, ph: 0, px: WASH.x, py: PIP_Y, pz: WASH.z, pf: 0, hx: HOLDER_REST.x, hy: HOLDER_REST.y, hz: HOLDER_REST.z, hg: 0 },
+    { flame: 0, bubbles: 0, t: 0, u: 0, fo: 0, zoom: 1, ph: 0, pc: 0, px: WASH.x, py: PIP_Y, pz: WASH.z, pf: 0, hx: HOLDER_REST.x, hy: HOLDER_REST.y, hz: HOLDER_REST.z, hg: 0 },
     tubeKeys('v', 0), tubeKeys('b', 0), tubeKeys('c', 0), tubeKeys('y', 0), tubeKeys('x', 0), tubeKeys('z', 0));
 
   // ── الخامات والأدوات ─────────────────────────────────────────────────────
@@ -170,6 +177,14 @@
     const benLiq = new THREE.Mesh(new THREE.CylinderGeometry(BEN_R * 0.94, BEN_R * 0.9, BEN_H * 0.7, 24), matBenedict); benLiq.position.set(BEN.x, BEN.y + 0.03 + BEN_H * 0.35, BEN.z); scene.add(benLiq);
     parts.washBeaker = beaker(WASH_R, WASH_H, scene); parts.washBeaker.position.copy(WASH);
     const washLiq = new THREE.Mesh(new THREE.CylinderGeometry(WASH_R * 0.94, WASH_R * 0.9, WASH_H * 0.65, 24), matWater); washLiq.position.set(WASH.x, WASH.y + 0.03 + WASH_H * 0.325, WASH.z); scene.add(washLiq);
+    // أوعية محاليل الجلوكوز السبعة (من قائمة المواد) خلف الحامل: كأس صغير لكلِّ تركيز بسائل شفَّاف
+    parts.stock = [];
+    for (let i = 1; i <= 7; i++) {
+      const st = STOCK(i), g = beaker(STOCK_R, STOCK_H, scene); g.position.copy(st);
+      const liqM = new THREE.MeshStandardMaterial({ color: GLUCOSE, transparent: true, opacity: 0.5, roughness: 0.2, depthWrite: false }); liqM.color.convertSRGBToLinear();
+      const liq = new THREE.Mesh(new THREE.CylinderGeometry(STOCK_R * 0.94, STOCK_R * 0.9, STOCK_H * 0.6, 20), liqM); liq.position.set(st.x, st.y + 0.03 + STOCK_H * 0.3, st.z); scene.add(liq);
+      parts.stock.push(g);
+    }
     // حامل الأنابيب: لوحان خشبيَّان وقوائم وحلقات الثقوب
     const rack = new THREE.Group();
     const top = new THREE.Mesh(new THREE.BoxGeometry(8.4, 0.12, 1.1), matWood); top.position.set(HOME_X(4), 0.55, 0); rack.add(top);
@@ -195,7 +210,8 @@
     pip.add(put(new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, PIP_LEN, 12, 1, true), matGlass), [0, PIP_LEN / 2 + 0.15, 0]));
     pip.add(put(new THREE.Mesh(new THREE.ConeGeometry(0.07, 0.15, 12), matGlass), [0, 0.075, 0], [Math.PI, 0, 0]));
     pip.add(put(new THREE.Mesh(new THREE.SphereGeometry(0.22, 16, 12), matBulb), [0, PIP_LEN + 0.35, 0]));
-    const col = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 1, 10), matBenedict); col.geometry.translate(0, 0.5, 0); col.position.y = 0.15; col.scale.y = 0.001; pip.add(col);
+    const colM = new THREE.MeshStandardMaterial({ color: GLUCOSE, transparent: true, opacity: 0.85, roughness: 0.2, depthWrite: false }); colM.color.convertSRGBToLinear();
+    const col = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 1, 10), colM); col.geometry.translate(0, 0.5, 0); col.position.y = 0.15; col.scale.y = 0.001; pip.add(col);
     pip.userData.column = col; pip.visible = false; scene.add(pip); parts.pipette = pip;
     // ماسك أنبوبة الاختبار: قضيب أفقي وفكَّان؛ أصله عند الفكَّين
     const holder = new THREE.Group();
@@ -225,6 +241,7 @@
       t.ppt.forEach(p => { p.visible = c > 0.3; const { a, r, h: hh } = p.userData; p.position.set(r * Math.cos(a), LIQ_BASE + 0.04 + h * (0.5 * (1 - fall) + 0.06 * hh), r * Math.sin(a)); });
     });
     parts.pipette.visible = s.ph > 0; parts.pipette.position.set(s.px, s.py, s.pz); parts.pipette.userData.column.scale.y = Math.max(0.001, s.pf * 1.8);
+    parts.pipette.userData.column.material.color.set(s.pc >= 0.5 ? BENEDICT : GLUCOSE).convertSRGBToLinear();
     parts.holder.position.set(s.hx, s.hy, s.hz);
     const gap = s.hg >= 0.5 ? TUBE_R + 0.06 : TUBE_R + 0.3; parts.holder.userData.jaws[0].position.x = -gap; parts.holder.userData.jaws[1].position.x = gap;
     parts.burner.flameIn.scale.y = s.flame; parts.burner.flameOut.scale.y = s.flame; parts.burner.light.intensity = 0.6 * s.flame;
@@ -278,7 +295,7 @@
       { t: 'وسم الأنابيب وإضافة 9 mL من كلِّ محلول',
         p: 'اكتب المسميات على أنابيب الاختبار السبع بالتراكيز المختلفة لمحلول الجلوكوز 10%، 1%، 0.1%، 0.01%، 0.001%، 0.0001%، والمحلول المجهول. استخدم الماصّة لإضافة 9 mL من كل محلول جلوكوز إلى أنبوبة الاختبار المطابقة. تذكّر أن تغسل الماصّة بين كل عمليتَي نقل. (كتاب الأنشطة ص ٧١)',
         seq: seqGlucose(),
-        pills: concPills.concat([['ماصَّة ' + L('10 mL'), TEAL, s => V(s.px, s.py + PIP_LEN + 0.5, s.pz), -150, -30], ['كأس الغسل', BLU, () => V(WASH.x, WASH.y + WASH_H, WASH.z), -120, -40]]) },
+        pills: concPills.concat([['ماصَّة ' + L('10 mL'), TEAL, s => V(s.px, s.py + PIP_LEN + 0.5, s.pz), -150, -30], ['كأس الغسل', BLU, () => V(WASH.x, WASH.y + WASH_H, WASH.z), -120, -40], ['محاليل الجلوكوز', GRY, () => V(HOME_X(4), TABLE_Y + STOCK_H, -2.4), 0, -70]]) },
       { t: 'إضافة 5 mL من محلول بندكت',
         p: 'أضف 5 mL من محلول بندكت إلى كل من الأنابيب السبع. (كتاب الأنشطة ص ٧١)',
         seq: seqBenedict(),
@@ -301,7 +318,7 @@
         seq: [[{ u: 1 }, 1400], [{ zoom: 1.6 }, 700]],
         pills: [['المحلول المجهول: بين ' + L('0.1%') + ' و' + L('0.01%'), PUR, tubeTop(7), 0, -165], [L('0.1%'), GRY, tubeTop(3), 110, -50], [L('0.01%'), GRY, tubeTop(4), -110, -50]] },
     ],
-    parts, glassMat, isLow,
+    parts, glassMat, isLow, geom: { HOME_Y, TUBE_H, BATH_TOP, LIFT_Y },
     setup,
     rebuild(s, ctx) {},
     place, focus, idle,
