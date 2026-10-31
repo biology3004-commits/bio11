@@ -10,7 +10,7 @@
   const TUBE_BOTTOM_Y = -0.15;                            // قاع الأنبوبة وهي في الحامل (اللوح السفلي)
   const HOME_Y = TUBE_BOTTOM_Y + TUBE_H / 2;              // مركز الأنبوبة وهي في الحامل
   const HOME_X = i => 5.5 - (i - 1) * 1.1;                // الأنبوبة 1 في أقصى اليمين (ترتيب الشكل ٢-١)
-  const TRIPOD_H = 1.7;                                   // ارتفاع الحامل الثلاثي فوق الطاولة
+  const TRIPOD_H = 2.3;                                   // ارتفاع الحامل الثلاثي فوق الطاولة
   const BATH = V(-6.5, TABLE_Y + TRIPOD_H + 0.05, 0.4);   // مركز قاع كأس الحمَّام المائي 500 mL (على الشبكة)
   const BATH_R = 1.35, BATH_H = 3.4, WATER_H = 2.4;       // الكأس والماء
   const BATH_SLOT = i => { const a = (i - 1) / 7 * 2 * Math.PI; return [BATH.x + 0.78 * Math.cos(a), BATH.z + 0.78 * Math.sin(a)]; };
@@ -94,14 +94,14 @@
     if (low) { const m = new THREE.MeshStandardMaterial({ color: 0xdfeefa, transparent: true, opacity: 0.35, roughness: 0.1, metalness: 0, depthWrite: false }); m.color.convertSRGBToLinear(); return m; }
     const m = new THREE.MeshPhysicalMaterial({ color: 0xd6eaf7, transmission: 0.75, roughness: 0.06, ior: 1.5, transparent: true, opacity: 0.8, metalness: 0, depthWrite: false, side: THREE.DoubleSide }); m.color.convertSRGBToLinear(); return m;
   }
-  const matWood = M(0x9c6b3c, { roughness: 0.75 }), matMetal = M(0x5c6670, { roughness: 0.35, metalness: 0.7 }), matDark = M(0x2b3138, { roughness: 0.5, metalness: 0.5 });
+  const matWood = M(0x9c6b3c, { roughness: 0.75 }), matMetal = M(0x7d8790, { roughness: 0.35, metalness: 0.7 }), matDark = M(0x2b3138, { roughness: 0.5, metalness: 0.5 });
   const matTile = M(0xf4f4f0, { roughness: 0.9 }), matBulb = M(0x1f5fbf, { roughness: 0.4 }), matLabel = M(0xffffff, { roughness: 0.95 });
   const matWater = (() => { const m = new THREE.MeshStandardMaterial({ color: 0xbfe3f5, transparent: true, opacity: 0.5, roughness: 0.15, depthWrite: false }); m.color.convertSRGBToLinear(); return m; })();
   const matBenedict = (() => { const m = new THREE.MeshStandardMaterial({ color: BENEDICT, transparent: true, opacity: 0.85, roughness: 0.2, depthWrite: false }); m.color.convertSRGBToLinear(); return m; })();
   const matBubble = new THREE.MeshStandardMaterial({ color: 0xffffff, transparent: true, opacity: 0.55, roughness: 0.1, depthWrite: false });
   const matSteam = new THREE.MeshStandardMaterial({ color: 0xffffff, transparent: true, opacity: 0.18, roughness: 1, depthWrite: false });
   const matFlameIn = new THREE.MeshStandardMaterial({ color: 0x3b82f6, emissive: 0x2563eb, emissiveIntensity: 1.2, transparent: true, opacity: 0.9, depthWrite: false });
-  const matFlameOut = new THREE.MeshStandardMaterial({ color: 0xffb347, emissive: 0xff8c1a, emissiveIntensity: 0.9, transparent: true, opacity: 0.45, depthWrite: false });
+  const matFlameOut = new THREE.MeshStandardMaterial({ color: 0xffb347, emissive: 0xff8c1a, emissiveIntensity: 1.4, transparent: true, opacity: 0.6, depthWrite: false });
   const matPpt = M('#8e2b17', { roughness: 0.6 });
   const parts = {};
   let matGlass;
@@ -140,19 +140,19 @@
     const burner = {};
     burner.body = new THREE.Group();
     burner.body.add(put(new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.65, 0.12, 20), matDark), [0, 0.06, 0]));
-    burner.body.add(put(new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.13, 1.05, 14), matMetal), [0, 0.65, 0]));
+    burner.body.add(put(new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.13, 1.25, 14), matMetal), [0, 0.75, 0]));
     burner.body.add(put(new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.17, 0.18, 14), matDark), [0, 0.45, 0]));
     burner.body.position.set(BATH.x, TABLE_Y + 0.1, BATH.z); scene.add(burner.body);
-    burner.flameIn = new THREE.Mesh(new THREE.ConeGeometry(0.11, 0.42, 12), matFlameIn); burner.flameIn.geometry.translate(0, 0.21, 0);
-    burner.flameOut = new THREE.Mesh(new THREE.ConeGeometry(0.2, 0.62, 12), matFlameOut); burner.flameOut.geometry.translate(0, 0.31, 0);
-    for (const f of [burner.flameIn, burner.flameOut]) { f.position.set(BATH.x, TABLE_Y + 1.27, BATH.z); f.scale.y = 0; scene.add(f); }
-    burner.light = new THREE.PointLight(0xffa040, 0, 6); burner.light.position.set(BATH.x, TABLE_Y + 1.6, BATH.z); scene.add(burner.light);
+    burner.flameIn = new THREE.Mesh(new THREE.ConeGeometry(0.15, 0.6, 12), matFlameIn); burner.flameIn.geometry.translate(0, 0.3, 0);
+    burner.flameOut = new THREE.Mesh(new THREE.ConeGeometry(0.27, 0.95, 12), matFlameOut); burner.flameOut.geometry.translate(0, 0.475, 0);
+    for (const f of [burner.flameIn, burner.flameOut]) { f.position.set(BATH.x, TABLE_Y + 1.47, BATH.z); f.scale.y = 0; scene.add(f); }
+    burner.light = new THREE.PointLight(0xffa040, 0, 6); burner.light.position.set(BATH.x, TABLE_Y + 1.85, BATH.z); scene.add(burner.light);
     parts.burner = burner;
     const tripod = new THREE.Group();
     for (let k = 0; k < 3; k++) { const a = k / 3 * 2 * Math.PI + 0.5; const leg = ctx.rod(V(BATH.x + 1.35 * Math.cos(a), TABLE_Y, BATH.z + 1.35 * Math.sin(a)), V(BATH.x + 1.1 * Math.cos(a), TABLE_Y + TRIPOD_H, BATH.z + 1.1 * Math.sin(a)), 0.05, matMetal, tripod); }
     const ring = new THREE.Mesh(new THREE.TorusGeometry(1.15, 0.05, 8, 32), matMetal); ring.rotation.x = Math.PI / 2; ring.position.set(BATH.x, TABLE_Y + TRIPOD_H, BATH.z); tripod.add(ring);
     scene.add(tripod); parts.tripod = tripod;
-    const gauze = new THREE.Mesh(new THREE.BoxGeometry(2.6, 0.04, 2.6), matMetal); gauze.position.set(BATH.x, TABLE_Y + TRIPOD_H + 0.03, BATH.z); scene.add(gauze); parts.gauze = gauze; parts.tile = tile;
+    const gauze = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.03, 2.4), M(0x9aa4ad, { roughness: 0.5, metalness: 0.6, transparent: true, opacity: 0.85 })); gauze.position.set(BATH.x, TABLE_Y + TRIPOD_H + 0.03, BATH.z); scene.add(gauze); parts.gauze = gauze; parts.tile = tile;
     const bath = {};
     bath.beaker = beaker(BATH_R, BATH_H, scene); bath.beaker.position.copy(BATH);
     bath.water = new THREE.Mesh(new THREE.CylinderGeometry(BATH_R * 0.95, BATH_R * 0.92, WATER_H, 28), matWater); bath.water.position.set(BATH.x, BATH.y + 0.03 + WATER_H / 2, BATH.z); scene.add(bath.water);
@@ -250,40 +250,56 @@
     }
   }
 
+
+  // ── التسميات (نقطة الإرساء دالَّة في الحالة) ───────────────────────────────
+  const tubeTop = i => s => V(HOME_X(i) + s['x' + i] + (i === 7 ? s.u * ((HOME_X(3) + HOME_X(4)) / 2 - HOME_X(7)) : 0), HOME_Y + s['y' + i] + TUBE_H / 2, s['z' + i] + (i === 7 ? s.u * 0.9 : 0));
+  const concPills = STD.conc.map((c, k) => [L(c), k === 6 ? PUR : GRY, tubeTop(k + 1), (k % 2 ? -1 : 1) * 10, k % 2 ? -62 : -110]);
+  const colourPills = STD.name.map((n, k) => [n, k === 6 ? PUR : GRY, tubeTop(k + 1), 0, k % 2 ? -60 : -112]);
+  const bathPill = ['كأس ' + L('500 mL') + ' (حمَّام مائي)', BLU, () => V(BATH.x, BATH.y + BATH_H, BATH.z), -40, -70];
+  const burnerPill = ['موقد لهب', ORG, () => V(BATH.x, TABLE_Y + 0.9, BATH.z + 0.5), 180, 40];
+  const timerPill = ['⏱ الزمن: ' + L('5') + ' دقائق بالضبط', RED, () => V(BATH.x + BATH_R, BATH.y + BATH_H * 0.75, BATH.z), 230, -10];
+
   window.DIORAMA = {
     id: 'benedict_lab',
     title: 'اختبار بندكت شبه الكمِّي: الاستقصاء العملي ٢-١ خطوةً خطوة',
     subtitle: 'الأحياء — الصف الحادي عشر — الوحدة الثانية: الجزيئات الحيويَّة — كتاب التجارب العمليَّة والأنشطة ص ٧٠–٧٣',
     source: 'النص من كتاب التجارب العمليَّة والأنشطة: الاستقصاء العملي ٢-١ (ص ٧٠–٧٣)؛ الألوان من دليل المعلِّم الجدول ٢-٢ (ص ١٢٤)',
-    legend: [],
-    camera: { VH: 20, center: [-0.5, 1.2, 0], elevation: 25, azimuth: 35 },
-    base: { L: 26, W: 12, x: -0.5 },
+    legend: [['#2b9fd8', 'محلول بندكت', 'dot'], ['#e6f4fb;border:1px solid #9aa7b4', 'محلول جلوكوز', 'dot'], ['#8e2b17', 'الراسب', 'dot']],
+    camera: { VH: 14.5, center: [-0.6, 1.7, 0], elevation: 25, azimuth: 35 },
+    base: { L: 17, W: 9, x: -0.5 },
     BASE,
     noGeom: Object.keys(BASE),
     model,
     STEPS: [
       { t: 'إعداد الحمَّام المائي',
         p: 'اعمل على إعداد حمّام مائي بدرجة الغليان. (كتاب الأنشطة ص ٧٢)',
-        seq: [[{ flame: 1 }, 700], [{ bubbles: 1 }, 1500]] },
+        seq: [[{ flame: 1 }, 700], [{ bubbles: 1 }, 1500]],
+        pills: [burnerPill, bathPill] },
       { t: 'وسم الأنابيب وإضافة 9 mL من كلِّ محلول',
         p: 'اكتب المسميات على أنابيب الاختبار السبع بالتراكيز المختلفة لمحلول الجلوكوز 10%، 1%، 0.1%، 0.01%، 0.001%، 0.0001%، والمحلول المجهول. استخدم الماصّة لإضافة 9 mL من كل محلول جلوكوز إلى أنبوبة الاختبار المطابقة. تذكّر أن تغسل الماصّة بين كل عمليتَي نقل. (كتاب الأنشطة ص ٧٢)',
-        seq: seqGlucose() },
+        seq: seqGlucose(),
+        pills: concPills.concat([['ماصَّة ' + L('10 mL'), TEAL, s => V(s.px, s.py + PIP_LEN + 0.5, s.pz), -150, -30], ['كأس الغسل', BLU, () => V(WASH.x, WASH.y + WASH_H, WASH.z), -120, -40]]) },
       { t: 'إضافة 5 mL من محلول بندكت',
         p: 'أضف 5 mL من محلول بندكت إلى كل من الأنابيب السبع. (كتاب الأنشطة ص ٧٢)',
-        seq: seqBenedict() },
+        seq: seqBenedict(),
+        pills: [['محلول بندكت ' + L('5 mL') + ' لكلِّ أنبوبة', BLU, () => V(BEN.x, BEN.y + BEN_H, BEN.z), 160, -50]] },
       { t: 'التسخين في الحمَّام المائي 5 دقائق بالضبط',
         p: 'ضع الأنابيب بحرص في الحمّام المائي الذي يغلي لمدّة 5 دقائق بالضبط. (كتاب الأنشطة ص ٧٢)',
         n: 'الألوان تتغيَّر خلال الدقائق الخمس؛ تُعرض هنا مسرَّعة.',
-        seq: seqHeat() },
+        seq: seqHeat(),
+        pills: [timerPill, ['يغلي', BLU, () => V(BATH.x - BATH_R, BATH.y + WATER_H, BATH.z), -90, 20]] },
       { t: 'إطفاء الموقد وإخراج الأنابيب إلى الحامل بالترتيب',
         p: 'أطفئ موقد اللهب واستخدم ماسك أنبوبة الاختبار لتُخرج الأنابيب بحرص، ثم ضعها في حامل الأنابيب بالترتيب المبيّن في الشكل ٢-١. (كتاب الأنشطة ص ٧٣)',
-        seq: seqOut() },
+        seq: seqOut(),
+        pills: [['ماسك أنبوبة الاختبار', GRY, s => V(s.hx, s.hy, s.hz + 1.0), 150, -40], ['حامل الأنابيب', GLD, () => V(HOME_X(7) - 0.8, 0.55, 0), -110, 50]] },
       { t: 'تسجيل الألوان',
         p: 'سجّل ألوان أنابيب الاختبار إمّا عبر التقاط صورة لحامل أنابيب الاختبار، أو عبر تلوين الأنابيب بالألوان المناسبة. (كتاب الأنشطة ص ٧٣)',
-        seq: [[{ '!fo': 1, zoom: 2.2 }, 900]] },
+        seq: [[{ '!fo': 1, zoom: 2.2 }, 900]],
+        pills: colourPills },
       { t: 'مقارنة المحلول المجهول بالألوان المعياريَّة',
         p: 'قارن لون المحلول المجهول بألوان معياريّة معروفة، محدّدًا تركيز اللون المعياري الأكثر تشابهًا مع لون المحلول. إذا لم يكن اللون مطابقًا تمامًا، فابحث عن ألوان المحاليل ذات التركيز الأعلى والأدنى لاقتراح النطاق الذي يقع فيه التركيز. (كتاب الأنشطة ص ٧٣)',
-        seq: [[{ u: 1 }, 1400], [{ zoom: 1.6 }, 700]] },
+        seq: [[{ u: 1 }, 1400], [{ zoom: 1.6 }, 700]],
+        pills: [['المحلول المجهول: بين ' + L('0.1%') + ' و' + L('0.01%'), PUR, tubeTop(7), 0, -165], [L('0.1%'), GRY, tubeTop(3), 110, -50], [L('0.01%'), GRY, tubeTop(4), -110, -50]] },
     ],
     parts, glassMat, isLow,
     setup,
