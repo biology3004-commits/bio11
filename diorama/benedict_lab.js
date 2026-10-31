@@ -21,6 +21,27 @@
                 name: ['أحمر بنّي', 'برتقالي', 'أصفر', 'أخضر', 'أخضر فاتح', 'أزرق', 'أخضر أو أصفر'] };
   let S;
 
+  // ── نموذج الألوان والسوائل (دوال نقيَّة؛ الألوان sRGB كما في لوحة المنصَّة) ────────
+  const LADDER = ['#2b9fd8', '#4e9a3c', '#f2c414', '#ec7a12', '#8e2b17'];   // كتاب الطالب ص ٧١: أزرق ← أخضر ← أصفر ← برتقالي ← بنّي محمر
+  const FINAL = ['#8e2b17', '#ec7a12', '#f2c414', '#4e9a3c', '#a2cf63', '#2b9fd8', null];   // دليل المعلِّم الجدول ٢-٢ (المجهول يُحسب مزيجاً)
+  const MAXSTEP = [4, 3, 2, 1, 0.5, 0, 1.5];                                  // أقصى موضع على السلَّم لكلِّ أنبوبة
+  const GLUCOSE = '#e6f4fb', BENEDICT = '#2b9fd8';
+  const model = {
+    LADDER, FINAL, MAXSTEP, TUBE_H,
+    colorFor(i, c, b) {
+      if (b <= 0) return new THREE.Color(GLUCOSE);
+      let col;
+      if (c >= 1) col = i === 7 ? new THREE.Color('#f2c414').lerp(new THREE.Color('#4e9a3c'), 0.5) : new THREE.Color(FINAL[i - 1]);
+      else {
+        const pos = Math.max(0, c) * MAXSTEP[i - 1], k = Math.min(LADDER.length - 2, Math.floor(pos)), u = pos - k;
+        col = new THREE.Color(LADDER[k]).lerp(new THREE.Color(LADDER[k + 1]), u);
+      }
+      return b >= 1 ? col : new THREE.Color(GLUCOSE).lerp(col, b);
+    },
+    levelH: v => 0.72 * TUBE_H * (v / 14),
+    turbidity: c => 0.55 + 0.35 * Math.min(1, Math.max(0, c)),
+  };
+
   // ── مقاطع الحركة المتكرِّرة ───────────────────────────────────────────────
   const tubeKeys = (k, val) => { const o = {}; for (let i = 1; i <= 7; i++) o[k + i] = val; return o; };
   // الخطوة 2: الماصَّة تنقل 9 mL إلى كلِّ أنبوبة وتُغسل بين كلِّ نقلين
@@ -73,6 +94,7 @@
     base: { L: 26, W: 12, x: -0.5 },
     BASE,
     noGeom: Object.keys(BASE),
+    model,
     STEPS: [
       { t: 'إعداد الحمَّام المائي',
         p: 'اعمل على إعداد حمّام مائي بدرجة الغليان. (كتاب الأنشطة ص ٧٢)',
