@@ -5,18 +5,22 @@
   const L = s => `<span class="ltr">${s}</span>`;
 
   // ── هندسة الطاولة (وحدات المشهد) ─────────────────────────────────────────
+  const TABLE_Y = -0.3;                                   // سطح الطاولة (لوح القاعدة في المحرِّك)
   const TUBE_H = 1.9, TUBE_R = 0.3;                      // ارتفاع الأنبوبة ونصف قطرها
-  const RACK_Y = 0.5;                                     // سطح الحامل
-  const HOME_Y = RACK_Y + TUBE_H / 2;                     // مركز الأنبوبة وهي في الحامل
+  const TUBE_BOTTOM_Y = -0.15;                            // قاع الأنبوبة وهي في الحامل (اللوح السفلي)
+  const HOME_Y = TUBE_BOTTOM_Y + TUBE_H / 2;              // مركز الأنبوبة وهي في الحامل
   const HOME_X = i => 5.5 - (i - 1) * 1.1;                // الأنبوبة 1 في أقصى اليمين (ترتيب الشكل ٢-١)
-  const BATH = V(-6.5, 0, 0.4);                           // مركز كأس الحمَّام المائي 500 mL
+  const TRIPOD_H = 1.7;                                   // ارتفاع الحامل الثلاثي فوق الطاولة
+  const BATH = V(-6.5, TABLE_Y + TRIPOD_H + 0.05, 0.4);   // مركز قاع كأس الحمَّام المائي 500 mL (على الشبكة)
   const BATH_R = 1.35, BATH_H = 3.4, WATER_H = 2.4;       // الكأس والماء
   const BATH_SLOT = i => { const a = (i - 1) / 7 * 2 * Math.PI; return [BATH.x + 0.78 * Math.cos(a), BATH.z + 0.78 * Math.sin(a)]; };
-  const BATH_Y = 0.4 + TUBE_H / 2 - HOME_Y;               // إزاحة y للأنبوبة داخل الكأس (قاعها فوق قاع الكأس بـ 0.4)
-  const BEN = V(-2.6, 0, 2.3), WASH = V(-2.6, 0, -1.6);   // كأس بندكت 50 mL وكأس الغسل
-  const PIP_Y = HOME_Y + TUBE_H / 2 + 1.0;                // ارتفاع رأس الماصَّة فوق الأنابيب
-  const PIP_FILL_Y = 2.2;                                 // ارتفاع الماصَّة وهي تسحب من كأس
-  const HOLDER_REST = V(-3.2, 0.15, -3.6);                 // الماسك على الطاولة
+  const BATH_Y = (BATH.y + 0.4 + TUBE_H / 2) - HOME_Y;    // إزاحة y للأنبوبة داخل الكأس (قاعها فوق قاع الكأس بـ 0.4)
+  const BEN = V(-2.6, TABLE_Y, 2.3), WASH = V(-2.6, TABLE_Y, -1.6);   // قاعدتا كأس بندكت 50 mL وكأس الغسل
+  const BEN_R = 0.55, BEN_H = 1.2, WASH_R = 0.6, WASH_H = 1.3;
+  const PIP_Y = HOME_Y + TUBE_H / 2 + 0.55;               // ارتفاع طرف الماصَّة فوق الأنابيب
+  const PIP_FILL_Y = TABLE_Y + 0.35;                      // طرف الماصَّة داخل سائل الكأس
+  const PIP_LEN = 2.4;                                    // طول أنبوب الماصَّة
+  const HOLDER_REST = V(-3.2, TABLE_Y + 0.1, -3.6);        // الماسك على الطاولة
   const STD = { conc: ['10%', '1%', '0.1%', '0.01%', '0.001%', '0.0001%', 'مجهول'],
                 name: ['أحمر بنّي', 'برتقالي', 'أصفر', 'أخضر', 'أخضر فاتح', 'أزرق', 'أخضر أو أصفر'] };
   let S;
@@ -84,6 +88,123 @@
     { flame: 0, bubbles: 0, t: 0, u: 0, fo: 0, zoom: 1, ph: 0, px: WASH.x, py: PIP_Y, pz: WASH.z, pf: 0, hx: HOLDER_REST.x, hy: HOLDER_REST.y, hz: HOLDER_REST.z, hg: 0 },
     tubeKeys('v', 0), tubeKeys('b', 0), tubeKeys('c', 0), tubeKeys('y', 0), tubeKeys('x', 0), tubeKeys('z', 0));
 
+  // ── الخامات والأدوات ─────────────────────────────────────────────────────
+  const isLow = () => (typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches) || /[?&]m=1(&|$)/.test(location.search);
+  function glassMat(low) {
+    if (low) { const m = new THREE.MeshStandardMaterial({ color: 0xdfeefa, transparent: true, opacity: 0.35, roughness: 0.1, metalness: 0, depthWrite: false }); m.color.convertSRGBToLinear(); return m; }
+    const m = new THREE.MeshPhysicalMaterial({ color: 0xd6eaf7, transmission: 0.75, roughness: 0.06, ior: 1.5, transparent: true, opacity: 0.8, metalness: 0, depthWrite: false, side: THREE.DoubleSide }); m.color.convertSRGBToLinear(); return m;
+  }
+  const matWood = M(0x9c6b3c, { roughness: 0.75 }), matMetal = M(0x5c6670, { roughness: 0.35, metalness: 0.7 }), matDark = M(0x2b3138, { roughness: 0.5, metalness: 0.5 });
+  const matTile = M(0xf4f4f0, { roughness: 0.9 }), matBulb = M(0x1f5fbf, { roughness: 0.4 }), matLabel = M(0xffffff, { roughness: 0.95 });
+  const matWater = (() => { const m = new THREE.MeshStandardMaterial({ color: 0xbfe3f5, transparent: true, opacity: 0.5, roughness: 0.15, depthWrite: false }); m.color.convertSRGBToLinear(); return m; })();
+  const matBenedict = (() => { const m = new THREE.MeshStandardMaterial({ color: BENEDICT, transparent: true, opacity: 0.85, roughness: 0.2, depthWrite: false }); m.color.convertSRGBToLinear(); return m; })();
+  const matBubble = new THREE.MeshStandardMaterial({ color: 0xffffff, transparent: true, opacity: 0.55, roughness: 0.1, depthWrite: false });
+  const matSteam = new THREE.MeshStandardMaterial({ color: 0xffffff, transparent: true, opacity: 0.18, roughness: 1, depthWrite: false });
+  const matFlameIn = new THREE.MeshStandardMaterial({ color: 0x3b82f6, emissive: 0x2563eb, emissiveIntensity: 1.2, transparent: true, opacity: 0.9, depthWrite: false });
+  const matFlameOut = new THREE.MeshStandardMaterial({ color: 0xffb347, emissive: 0xff8c1a, emissiveIntensity: 0.9, transparent: true, opacity: 0.45, depthWrite: false });
+  const matPpt = M('#8e2b17', { roughness: 0.6 });
+  const parts = {};
+  let matGlass;
+  const put = (m, p, r) => { m.position.set(p[0], p[1], p[2]); if (r) m.rotation.set(r[0], r[1], r[2]); return m; };
+
+  // كأس مفتوح: جدار أسطواني + قاع + فوَّهة صغيرة؛ أصله عند مركز القاع
+  function beaker(r, h, parent) {
+    const g = new THREE.Group();
+    const wall = new THREE.Mesh(new THREE.CylinderGeometry(r, r * 0.96, h, 28, 1, true), matGlass); wall.position.y = h / 2; g.add(wall);
+    const bottom = new THREE.Mesh(new THREE.CircleGeometry(r * 0.96, 28), matGlass); bottom.rotation.x = -Math.PI / 2; bottom.position.y = 0.02; g.add(bottom);
+    const spout = new THREE.Mesh(new THREE.TorusGeometry(r, 0.03, 8, 28), matGlass); spout.rotation.x = Math.PI / 2; spout.position.y = h; g.add(spout);
+    parent.add(g); return g;
+  }
+  // أنبوبة اختبار: جدار + قاع نصف كروي + حافَّة؛ أصلها عند مركزها
+  function testTube(parent) {
+    const g = new THREE.Group();
+    const wall = new THREE.Mesh(new THREE.CylinderGeometry(TUBE_R, TUBE_R, TUBE_H - TUBE_R, 24, 1, true), matGlass); wall.position.y = TUBE_R / 2; g.add(wall);
+    const bottom = new THREE.Mesh(new THREE.SphereGeometry(TUBE_R, 24, 12, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2), matGlass); bottom.position.y = -TUBE_H / 2 + TUBE_R; g.add(bottom);
+    const rim = new THREE.Mesh(new THREE.TorusGeometry(TUBE_R, 0.035, 8, 24), matGlass); rim.rotation.x = Math.PI / 2; rim.position.y = TUBE_H / 2; g.add(rim);
+    parent.add(g); return g;
+  }
+  function envMapFor(renderer) {
+    const pm = new THREE.PMREMGenerator(renderer), sc = new THREE.Scene();
+    sc.add(new THREE.Mesh(new THREE.SphereGeometry(50, 16, 12), new THREE.MeshBasicMaterial({ color: 0xdfe8f0, side: THREE.BackSide })));
+    const floor = new THREE.Mesh(new THREE.PlaneGeometry(100, 100), new THREE.MeshBasicMaterial({ color: 0x9aa3ad })); floor.rotation.x = -Math.PI / 2; floor.position.y = -2; sc.add(floor);
+    const win = new THREE.Mesh(new THREE.PlaneGeometry(4, 3), new THREE.MeshBasicMaterial({ color: 0xffffff })); win.position.set(0, 6, -10); win.lookAt(0, 0, 0); sc.add(win);
+    const tex = pm.fromScene(sc, 0.04).texture; pm.dispose(); return tex;
+  }
+
+  function setup(ctx) {
+    const low = isLow(), scene = ctx.scene;
+    matGlass = glassMat(low);
+    if (ctx.renderer && !low) { matGlass.envMap = envMapFor(ctx.renderer); matGlass.envMapIntensity = 1.0; }
+    // الحمَّام المائي: بلاط، موقد، حامل ثلاثي، شبكة، كأس 500 mL، ماء، فقاعات، بخار
+    const tile = new THREE.Mesh(new THREE.BoxGeometry(3.6, 0.1, 3.6), matTile); tile.position.set(BATH.x, TABLE_Y + 0.05, BATH.z); scene.add(tile);
+    const burner = {};
+    burner.body = new THREE.Group();
+    burner.body.add(put(new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.65, 0.12, 20), matDark), [0, 0.06, 0]));
+    burner.body.add(put(new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.13, 1.05, 14), matMetal), [0, 0.65, 0]));
+    burner.body.add(put(new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.17, 0.18, 14), matDark), [0, 0.45, 0]));
+    burner.body.position.set(BATH.x, TABLE_Y + 0.1, BATH.z); scene.add(burner.body);
+    burner.flameIn = new THREE.Mesh(new THREE.ConeGeometry(0.11, 0.42, 12), matFlameIn); burner.flameIn.geometry.translate(0, 0.21, 0);
+    burner.flameOut = new THREE.Mesh(new THREE.ConeGeometry(0.2, 0.62, 12), matFlameOut); burner.flameOut.geometry.translate(0, 0.31, 0);
+    for (const f of [burner.flameIn, burner.flameOut]) { f.position.set(BATH.x, TABLE_Y + 1.27, BATH.z); f.scale.y = 0; scene.add(f); }
+    burner.light = new THREE.PointLight(0xffa040, 0, 6); burner.light.position.set(BATH.x, TABLE_Y + 1.6, BATH.z); scene.add(burner.light);
+    parts.burner = burner;
+    const tripod = new THREE.Group();
+    for (let k = 0; k < 3; k++) { const a = k / 3 * 2 * Math.PI + 0.5; const leg = ctx.rod(V(BATH.x + 1.35 * Math.cos(a), TABLE_Y, BATH.z + 1.35 * Math.sin(a)), V(BATH.x + 1.1 * Math.cos(a), TABLE_Y + TRIPOD_H, BATH.z + 1.1 * Math.sin(a)), 0.05, matMetal, tripod); }
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(1.15, 0.05, 8, 32), matMetal); ring.rotation.x = Math.PI / 2; ring.position.set(BATH.x, TABLE_Y + TRIPOD_H, BATH.z); tripod.add(ring);
+    scene.add(tripod); parts.tripod = tripod;
+    const gauze = new THREE.Mesh(new THREE.BoxGeometry(2.6, 0.04, 2.6), matMetal); gauze.position.set(BATH.x, TABLE_Y + TRIPOD_H + 0.03, BATH.z); scene.add(gauze); parts.gauze = gauze; parts.tile = tile;
+    const bath = {};
+    bath.beaker = beaker(BATH_R, BATH_H, scene); bath.beaker.position.copy(BATH);
+    bath.water = new THREE.Mesh(new THREE.CylinderGeometry(BATH_R * 0.95, BATH_R * 0.92, WATER_H, 28), matWater); bath.water.position.set(BATH.x, BATH.y + 0.03 + WATER_H / 2, BATH.z); scene.add(bath.water);
+    bath.bubbles = [];
+    const nB = low ? 15 : 30, gB = new THREE.SphereGeometry(1, 8, 6);
+    for (let k = 0; k < nB; k++) {
+      const b = new THREE.Mesh(gB, matBubble); const a = k * 2.399, rr = 0.15 + 0.75 * ((k * 0.618) % 1);
+      b.userData = { ox: BATH.x + rr * Math.cos(a), oz: BATH.z + rr * Math.sin(a), phase: (k * 0.37) % 1, speed: 0.35 + 0.45 * ((k * 0.29) % 1), r: 0.035 + 0.03 * ((k * 0.71) % 1) };
+      b.scale.setScalar(b.userData.r); b.position.set(b.userData.ox, BATH.y + 0.1, b.userData.oz); b.visible = false; scene.add(b); bath.bubbles.push(b);
+    }
+    bath.steam = [0, 1].map(k => { const s = new THREE.Mesh(new THREE.SphereGeometry(1, 16, 12), matSteam); s.scale.set(0.55, 0.35, 0.55); s.position.set(BATH.x + (k ? 0.4 : -0.3), BATH.y + BATH_H + 0.3, BATH.z); s.visible = false; scene.add(s); return s; });
+    parts.bath = bath;
+    // كأس بندكت 50 mL (أزرق) وكأس الغسل (ماء)
+    parts.benedictBeaker = beaker(BEN_R, BEN_H, scene); parts.benedictBeaker.position.copy(BEN);
+    const benLiq = new THREE.Mesh(new THREE.CylinderGeometry(BEN_R * 0.94, BEN_R * 0.9, BEN_H * 0.7, 24), matBenedict); benLiq.position.set(BEN.x, BEN.y + 0.03 + BEN_H * 0.35, BEN.z); scene.add(benLiq);
+    parts.washBeaker = beaker(WASH_R, WASH_H, scene); parts.washBeaker.position.copy(WASH);
+    const washLiq = new THREE.Mesh(new THREE.CylinderGeometry(WASH_R * 0.94, WASH_R * 0.9, WASH_H * 0.65, 24), matWater); washLiq.position.set(WASH.x, WASH.y + 0.03 + WASH_H * 0.325, WASH.z); scene.add(washLiq);
+    // حامل الأنابيب: لوحان خشبيَّان وقوائم وحلقات الثقوب
+    const rack = new THREE.Group();
+    const top = new THREE.Mesh(new THREE.BoxGeometry(8.4, 0.12, 1.1), matWood); top.position.set(HOME_X(4), 0.55, 0); rack.add(top);
+    const bot = new THREE.Mesh(new THREE.BoxGeometry(8.4, 0.12, 1.1), matWood); bot.position.set(HOME_X(4), TUBE_BOTTOM_Y - 0.06, 0); rack.add(bot);
+    for (const [sx, sz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) rack.add(put(new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.55 - TABLE_Y, 0.14), matWood), [HOME_X(4) + sx * 4.1, (0.55 + TABLE_Y) / 2, sz * 0.45]));
+    for (let i = 1; i <= 7; i++) { const h = new THREE.Mesh(new THREE.TorusGeometry(TUBE_R + 0.06, 0.05, 8, 24), matWood); h.rotation.x = Math.PI / 2; h.position.set(HOME_X(i), 0.62, 0); rack.add(h); }
+    scene.add(rack); parts.rack = rack;
+    // الأنابيب السبع: زجاج، سائل، منسك، راسب (للأنبوبتين 1 و2)
+    parts.tubes = [];
+    for (let i = 1; i <= 7; i++) {
+      const home = V(HOME_X(i), HOME_Y, 0);
+      const glass = testTube(scene); glass.position.copy(home);
+      const liqM = new THREE.MeshStandardMaterial({ color: GLUCOSE, transparent: true, opacity: 0.55, roughness: 0.2, depthWrite: false }); liqM.color.convertSRGBToLinear();
+      const liquid = new THREE.Mesh(new THREE.CylinderGeometry(TUBE_R * 0.9, TUBE_R * 0.9, 1, 20), liqM); liquid.geometry.translate(0, 0.5, 0); liquid.visible = false; glass.add(liquid);
+      const menM = new THREE.MeshStandardMaterial({ color: 0xffffff, transparent: true, opacity: 0.35, roughness: 0.1, depthWrite: false });
+      const meniscus = new THREE.Mesh(new THREE.CylinderGeometry(TUBE_R * 0.9, TUBE_R * 0.9, 0.02, 20), menM); meniscus.visible = false; glass.add(meniscus);
+      const ppt = [];
+      if (i <= 2) for (let k = 0; k < 20; k++) { const p = new THREE.Mesh(gB, matPpt); p.scale.setScalar(0.035); p.userData = { a: k * 2.399, r: TUBE_R * 0.7 * ((k * 0.618) % 1), h: (k * 0.37) % 1 }; p.visible = false; glass.add(p); ppt.push(p); }
+      parts.tubes.push({ glass, liquid, meniscus, ppt, home });
+    }
+    // الماصَّة 10 mL مع محقن الماصَّة: أصلها عند الطرف
+    const pip = new THREE.Group();
+    pip.add(put(new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, PIP_LEN, 12, 1, true), matGlass), [0, PIP_LEN / 2 + 0.15, 0]));
+    pip.add(put(new THREE.Mesh(new THREE.ConeGeometry(0.07, 0.15, 12), matGlass), [0, 0.075, 0], [Math.PI, 0, 0]));
+    pip.add(put(new THREE.Mesh(new THREE.SphereGeometry(0.22, 16, 12), matBulb), [0, PIP_LEN + 0.35, 0]));
+    const col = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 1, 10), matBenedict); col.geometry.translate(0, 0.5, 0); col.position.y = 0.15; col.scale.y = 0.001; pip.add(col);
+    pip.userData.column = col; pip.visible = false; scene.add(pip); parts.pipette = pip;
+    // ماسك أنبوبة الاختبار: قضيب أفقي وفكَّان؛ أصله عند الفكَّين
+    const holder = new THREE.Group();
+    holder.add(put(new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 1.6, 10), matMetal), [0, 0, 1.0], [Math.PI / 2, 0, 0]));
+    holder.add(put(new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.3, 0.5), matWood), [0, 0, 1.75]));
+    const jawL = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.28, 0.34), matMetal), jawR = jawL.clone(); jawL.position.x = -TUBE_R - 0.06; jawR.position.x = TUBE_R + 0.06; holder.add(jawL, jawR);
+    holder.userData.jaws = [jawL, jawR]; holder.position.copy(HOLDER_REST); scene.add(holder); parts.holder = holder;
+  }
+
   window.DIORAMA = {
     id: 'benedict_lab',
     title: 'اختبار بندكت شبه الكمِّي: الاستقصاء العملي ٢-١ خطوةً خطوة',
@@ -119,7 +240,8 @@
         p: 'قارن لون المحلول المجهول بألوان معياريّة معروفة، محدّدًا تركيز اللون المعياري الأكثر تشابهًا مع لون المحلول. إذا لم يكن اللون مطابقًا تمامًا، فابحث عن ألوان المحاليل ذات التركيز الأعلى والأدنى لاقتراح النطاق الذي يقع فيه التركيز. (كتاب الأنشطة ص ٧٣)',
         seq: [[{ u: 1 }, 1400], [{ zoom: 1.6 }, 700]] },
     ],
-    setup(ctx) {},
+    parts, glassMat, isLow,
+    setup,
     rebuild(s, ctx) {},
     place(s, ctx) { S = s; },
   };
