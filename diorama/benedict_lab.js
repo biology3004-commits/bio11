@@ -233,6 +233,23 @@
   }
   const focus = s => (s.fo || 0) >= 0.5 ? RACK_MID.clone() : V(-0.5, 1.2, 0);
 
+  // ── الحركة الحيَّة: فقاعات الغليان والبخار وارتجاف اللهب (فقط ما دام الموقد مشتعلاً) ──
+  function idle(t, s, ctx, tweening) {
+    if (s.flame === 0 && s.bubbles === 0 && !tweening) return;
+    if (s.bubbles > 0) {
+      parts.bath.bubbles.forEach(b => {
+        const { ox, oz, phase, speed, r } = b.userData, u = (t * speed + phase) % 1;
+        b.position.set(ox + 0.06 * Math.sin(t * 3 + phase * 9), BATH.y + 0.12 + u * (WATER_H - 0.25), oz + 0.06 * Math.cos(t * 2.3 + phase * 7));
+        b.scale.setScalar(r * (0.6 + 0.4 * u) * (u > 0.92 ? (1 - u) / 0.08 : 1) * s.bubbles);
+      });
+      parts.bath.steam.forEach((st, k) => { st.position.y = BATH.y + BATH_H + 0.25 + 0.25 * Math.sin(t * 0.9 + k * 2.1); st.scale.x = st.scale.z = 0.55 + 0.12 * Math.sin(t * 1.3 + k); st.material.opacity = 0.18 * s.bubbles * (0.7 + 0.3 * Math.sin(t * 1.7 + k * 3)); });
+    }
+    if (s.flame > 0) {
+      const f = s.flame * (1 + 0.08 * Math.sin(t * 13 + 0.7)), g = s.flame * (1 + 0.08 * Math.sin(t * 11 + 2.1));
+      parts.burner.flameIn.scale.y = f; parts.burner.flameOut.scale.y = g; parts.burner.light.intensity = 0.6 * s.flame * (1 + 0.15 * Math.sin(t * 9));
+    }
+  }
+
   window.DIORAMA = {
     id: 'benedict_lab',
     title: 'اختبار بندكت شبه الكمِّي: الاستقصاء العملي ٢-١ خطوةً خطوة',
@@ -271,6 +288,6 @@
     parts, glassMat, isLow,
     setup,
     rebuild(s, ctx) {},
-    place, focus,
+    place, focus, idle,
   };
 })();
