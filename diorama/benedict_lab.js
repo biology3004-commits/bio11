@@ -205,6 +205,34 @@
     holder.userData.jaws = [jawL, jawR]; holder.position.copy(HOLDER_REST); scene.add(holder); parts.holder = holder;
   }
 
+  // ── الوضع من الحالة وحدها (يصلح للقفز إلى أيِّ خطوة وللعودة) ──────────────
+  const LIQ_BASE = -TUBE_H / 2 + 0.06;                    // قاع السائل داخل الأنبوبة (محلِّي)
+  const RACK_MID = V(HOME_X(4), HOME_Y, 0);
+  const clamp01 = x => Math.min(1, Math.max(0, x));
+  function place(s, ctx) {
+    S = s;
+    const midX = (HOME_X(3) + HOME_X(4)) / 2;
+    parts.tubes.forEach((t, k) => {
+      const i = k + 1, v = s['v' + i], b = s['b' + i], c = s['c' + i];
+      const ux = i === 7 ? s.u * (midX - t.home.x) : 0, uz = i === 7 ? s.u * 0.9 : 0;
+      t.glass.position.set(t.home.x + s['x' + i] + ux, t.home.y + s['y' + i], s['z' + i] + uz);
+      const h = model.levelH(v);
+      t.liquid.visible = v > 0; t.liquid.scale.y = Math.max(0.001, h); t.liquid.position.y = LIQ_BASE;
+      t.liquid.material.color.copy(model.colorFor(i, c, b)).convertSRGBToLinear();
+      t.liquid.material.opacity = b > 0 ? model.turbidity(c) : 0.45;
+      t.meniscus.visible = v > 0; t.meniscus.position.y = LIQ_BASE + h;
+      const fall = clamp01((c - 0.3) / 0.7);
+      t.ppt.forEach(p => { p.visible = c > 0.3; const { a, r, h: hh } = p.userData; p.position.set(r * Math.cos(a), LIQ_BASE + 0.04 + h * (0.5 * (1 - fall) + 0.06 * hh), r * Math.sin(a)); });
+    });
+    parts.pipette.visible = s.ph > 0; parts.pipette.position.set(s.px, s.py, s.pz); parts.pipette.userData.column.scale.y = Math.max(0.001, s.pf * 1.8);
+    parts.holder.position.set(s.hx, s.hy, s.hz);
+    const gap = s.hg >= 0.5 ? TUBE_R + 0.06 : TUBE_R + 0.3; parts.holder.userData.jaws[0].position.x = -gap; parts.holder.userData.jaws[1].position.x = gap;
+    parts.burner.flameIn.scale.y = s.flame; parts.burner.flameOut.scale.y = s.flame; parts.burner.light.intensity = 0.6 * s.flame;
+    parts.bath.bubbles.forEach(bb => { bb.visible = s.bubbles > 0; });
+    parts.bath.steam.forEach(st => { st.visible = s.bubbles > 0; st.material.opacity = 0.18 * s.bubbles; });
+  }
+  const focus = s => (s.fo || 0) >= 0.5 ? RACK_MID.clone() : V(-0.5, 1.2, 0);
+
   window.DIORAMA = {
     id: 'benedict_lab',
     title: 'اختبار بندكت شبه الكمِّي: الاستقصاء العملي ٢-١ خطوةً خطوة',
@@ -243,6 +271,6 @@
     parts, glassMat, isLow,
     setup,
     rebuild(s, ctx) {},
-    place(s, ctx) { S = s; },
+    place, focus,
   };
 })();
