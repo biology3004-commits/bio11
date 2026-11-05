@@ -3516,7 +3516,7 @@ body :not(.header *)[style*="font-size:0.74rem"] { font-size: 0.78rem !important
       });
     })();
     </script>
-    <span id="appVersionTag" dir="ltr" title="تاريخ الإصدار · رقم النشر (يطابق CACHE_VERSION في sw.js)" style="background:#eceff1;color:#37474f;padding:3px 9px;border-radius:6px;font-size:0.68rem;font-weight:600;">v2026.11.05 · 18</span>
+    <span id="appVersionTag" dir="ltr" title="تاريخ الإصدار · رقم النشر (يطابق CACHE_VERSION في sw.js)" style="background:#eceff1;color:#37474f;padding:3px 9px;border-radius:6px;font-size:0.68rem;font-weight:600;">v2026.11.05 · 19</span>
     <span id="streakBadge" title="" style="display:none;background:linear-gradient(135deg,#d84315,#f4511e);color:white;padding:3px 9px;border-radius:6px;font-size:0.7rem;font-weight:700;align-items:center;gap:5px;cursor:pointer;box-shadow:0 2px 6px rgba(216,67,21,0.3);" onclick="document.querySelector('.nav-tab[data-tab=&quot;assistant&quot;]').click(); setTimeout(() => kbAskChip('تحدِّي اليوم'), 200);">
       <span style="font-size:0.85rem;line-height:1;">🔥</span>
       <span class="streak-value">0</span>
@@ -5248,7 +5248,7 @@ document.addEventListener('DOMContentLoaded', () => {
       <div class="icon" style="background:linear-gradient(135deg,#7e57c2,#b39ddb); color:white;">&#x1F3AE;</div>
       <div>
         <h2>الألعاب التعليمية التفاعلية</h2>
-        <p style="font-size:0.85rem; color:var(--text-light);">سبع ألعاب ممتعة للمراجعة والتقويم التكويني — تشمل جميع الوحدات</p>
+        <p style="font-size:0.85rem; color:var(--text-light);">ثماني ألعاب ممتعة للمراجعة والتقويم التكويني — تشمل جميع الوحدات</p>
       </div>
     </div>
 
@@ -5397,6 +5397,8 @@ document.addEventListener('DOMContentLoaded', () => {
     .rating-fab { bottom: 14px; inset-inline-end: 14px; padding: 8px 14px; font-size: 0.8rem; }
     .rating-fab .rating-fab-text { display: none; }
     .rating-fab .rating-fab-icon { font-size: 1.2rem; }
+    .rating-fab { opacity: .85; bottom: 10px; inset-inline-end: 10px; }
+    .tab-content.active { padding-bottom: 64px; } /* G11: لا يغطّي الزرُّ العائم آخر صفٍّ في القائمة */
   }
   /* Dialog overlay */
   .rating-overlay {
@@ -7537,6 +7539,7 @@ function detectIntent(rawQuery) {
   // ملخَّص الوحدة (انفوجرافيك «الوحدة كلُّها في صفحة»): «ملخص الوحدة الرابعة» / «ملخص 4» / «خلاصة الوحدة»
   if (/(ملخص|خلاصه|تلخيص)\s*(ال)?وحده/.test(q) || /^(ملخص|خلاصه|تلخيص)\s*([1-5٠-٩]|ال(اولي|ثانيه|ثالثه|رابعه|خامسه))\s*$/.test(q)) return 'unit-summary';
   // ميزات شخصية: خطَّة مذاكرة، اختبار تكيُّفي، تقدُّمي، تحدِّي اليوم، أخطائي
+  if (/مواصفات|نموذج الامتحان|توزيع الدرجات|درجه الامتحان|درجات الامتحان|شكل الامتحان|زمن الامتحان|مده الامتحان|عدد (اسيله|مفردات|الاسيله|المفردات) الامتحان|كم (سوال|درجه|مفرده) (في |ب)?الامتحان|وزن الوحدات|اوزان الوحدات/.test(q)) return 'exam-spec'; // G11: مواصفات الامتحان
   if (/خطه مذاكره|خطة مذاكرة|خطة دراسة|خطه دراسه|خطة المذاكرة|برنامج مذاكره|برنامج مذاكرة|خطط لي|خطه لي/.test(q)) return 'study-plan';
   if (/تحدي اليوم|تحدّي اليوم|التحدي اليومي|تحدي يومي|تحديي|تحدي\s|تحدّي/.test(q)) return 'daily-challenge';
   if (/^اخطاي?ي$|دفتر اخطاي?ي|راجع اخطاي?ي|مراجعه اخطاء?|الاخطاء? السابقه/.test(q)) return 'my-mistakes';
@@ -10169,6 +10172,7 @@ function gatherDeeperContent(top, query, intent) {
 
 function formatLocalResponse(results, query, intent) {
   // النوايا الشخصية لا تحتاج بحثاً في knowledgeBase — تُجاب مباشرة
+  if (intent === 'exam-spec' && typeof _g11ExamSpecHtml === 'function') return _g11ExamSpecHtml(); // G11
   if (intent === 'study-plan') {
     // استخرج عدد الأيام من السؤال إن وُجد، وإلا 7
     const m = normalizeArabic(query).match(/(\d+)\s*(يوم|ايام|اسبوع|شهر)?/);
@@ -10714,7 +10718,7 @@ function sendChat() {
     const _fuItem = (typeof _followUpQA === 'object') ? _followUpQA[normalizeArabic(_plainQA(msg))] : null;
     if (_fuItem) intent = 'qa';
     // «ملخص 2» ليس إشارة إلى العنصر رقم 2 من النتائج السابقة بل ملخَّص الوحدة الثانية
-    const ctxReply = (_fuItem || intent === 'unit-summary') ? null : _tryContextualReply(msg, qNorm, intent);
+    const ctxReply = (_fuItem || intent === 'unit-summary' || intent === 'exam-spec') ? null : _tryContextualReply(msg, qNorm, intent);
     let response;
     let localResults = null;
 

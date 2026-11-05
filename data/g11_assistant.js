@@ -73,3 +73,30 @@
     } catch (e) { return results; }
   };
 })();
+
+// ردُّ المساعد عن مواصفات الامتحان النهائي (2026-11-05): كان «ما مواصفات الامتحان النهائي» يعيد سؤالاً عشوائيّاً.
+// النيَّة exam-spec تُكشف في المحرِّك (رقعة build_engine.py) وتستدعي هذه الدالَّة؛ الأرقام من وثيقة التقويم 2026/2027 ص28–29، وأوزان الوحدات من EXAM_UNIT_WEIGHTS.
+window._g11ExamSpecHtml = function () {
+  const td = 'padding:4px 8px;border:1px solid #cfd8dc;';
+  let rows = '';
+  try {
+    const W = (window.G11_DATA && window.G11_DATA.EXAM_UNIT_WEIGHTS) || {};
+    const list = Array.isArray(W.S1) ? W.S1 : [];
+    rows = list.map(w => `<tr><td style="${td}">الوحدة ${w.unit}</td><td style="${td}text-align:center;">${w.marks} (${w.weight})</td></tr>`).join('');
+  } catch (e) { rows = ''; }
+  if (!rows) rows = ['الوحدة الأولى — تركيب الخليَّة|١٦', 'الوحدة الثانية — الجزيئات الحيويَّة|٢٢', 'الوحدة الثالثة — الإنزيمات|١٢', 'الوحدة الرابعة — دورة الخليَّة والانقسام المتساوي|١٠'].map(x => { const [n, m] = x.split('|'); return `<tr><td style="${td}">${n}</td><td style="${td}text-align:center;">${m}</td></tr>`; }).join('');
+  const row = (k, v) => `<tr><td style="${td}font-weight:700;white-space:nowrap;">${k}</td><td style="${td}">${v}</td></tr>`;
+  return `<div style="background:#e8f5e9;color:#1b5e20;padding:8px 12px;border-radius:8px;margin-bottom:10px;border-right:4px solid #2e7d32;font-weight:700;">📝 مواصفات امتحان نهاية الفصل الأوَّل — الصف الحادي عشر (وثيقة تقويم تعلُّم الطلبة في موادِّ العلوم 11–12، إصدار 2026/2027، ص28–29)</div>
+<table style="border-collapse:collapse;width:100%;font-size:0.9rem;margin-bottom:10px;">
+${row('الدرجة الكلِّيَّة', '60 درجة')}
+${row('الزمن', 'ساعتان ونصف')}
+${row('عدد المفردات', '30–40 مفردة')}
+${row('أنواع المفردات', '10 مفردات اختيار من متعدِّد (درجة لكلٍّ) + مفردتان طويلتان على الأقلّ + الباقي إجابة قصيرة')}
+${row('أهداف التقويم', 'AO1 معرفة وفهم: 20 درجة · AO2 تطبيق وتحليل: 40 درجة')}
+${row('مستويات الصعوبة', 'منخفض 24 (40٪) · متوسِّط 24 (40٪) · مرتفع 12 (20٪)')}
+</table>
+<div style="font-weight:700;margin:6px 0 4px;">⚖️ أوزان الوحدات (من 60 درجة)</div>
+<table style="border-collapse:collapse;width:100%;font-size:0.9rem;margin-bottom:10px;"><tr><th style="${td}background:#eceff1;">الوحدة</th><th style="${td}background:#eceff1;">الدرجات</th></tr>${rows}</table>
+<button onclick="var t=document.querySelector('.nav-tab[data-tab=examspec]'); if (t) { t.click(); window.scrollTo({ top: 0, behavior: 'smooth' }); }" style="background:linear-gradient(135deg,#00695c,#00897b);color:#fff;border:none;padding:9px 16px;border-radius:10px;font-weight:700;cursor:pointer;font-family:inherit;">📝 افتح تبويب «نموذج الامتحان النهائي» بالتفصيل والعدِّ التنازلي</button>
+<div style="font-size:0.82rem;color:#616161;margin-top:8px;">💡 ولتوليد امتحان كامل بهذه المواصفات اضغط «📜 امتحان نهائي ٦٠ درجة» في تبويب مولِّد الأسئلة.</div>`;
+};
