@@ -3516,7 +3516,7 @@ body :not(.header *)[style*="font-size:0.74rem"] { font-size: 0.78rem !important
       });
     })();
     </script>
-    <span id="appVersionTag" dir="ltr" title="تاريخ الإصدار · رقم النشر (يطابق CACHE_VERSION في sw.js)" style="background:#eceff1;color:#37474f;padding:3px 9px;border-radius:6px;font-size:0.68rem;font-weight:600;">v2026.10.31 · 17</span>
+    <span id="appVersionTag" dir="ltr" title="تاريخ الإصدار · رقم النشر (يطابق CACHE_VERSION في sw.js)" style="background:#eceff1;color:#37474f;padding:3px 9px;border-radius:6px;font-size:0.68rem;font-weight:600;">v2026.11.05 · 18</span>
     <span id="streakBadge" title="" style="display:none;background:linear-gradient(135deg,#d84315,#f4511e);color:white;padding:3px 9px;border-radius:6px;font-size:0.7rem;font-weight:700;align-items:center;gap:5px;cursor:pointer;box-shadow:0 2px 6px rgba(216,67,21,0.3);" onclick="document.querySelector('.nav-tab[data-tab=&quot;assistant&quot;]').click(); setTimeout(() => kbAskChip('تحدِّي اليوم'), 200);">
       <span style="font-size:0.85rem;line-height:1;">🔥</span>
       <span class="streak-value">0</span>
@@ -5248,7 +5248,7 @@ document.addEventListener('DOMContentLoaded', () => {
       <div class="icon" style="background:linear-gradient(135deg,#7e57c2,#b39ddb); color:white;">&#x1F3AE;</div>
       <div>
         <h2>الألعاب التعليمية التفاعلية</h2>
-        <p style="font-size:0.85rem; color:var(--text-light);">ثلاث ألعاب ممتعة للمراجعة والتقويم التكويني — تشمل جميع الوحدات</p>
+        <p style="font-size:0.85rem; color:var(--text-light);">سبع ألعاب ممتعة للمراجعة والتقويم التكويني — تشمل جميع الوحدات</p>
       </div>
     </div>
 
@@ -9513,7 +9513,7 @@ function kbQuizMeAdaptive() {
 // STUDY PLAN — خطَّة مذاكرة ذكيَّة قائمة على تحليل الأداء
 // تُكيِّف الخطَّة حسب: عدد الأيَّام (طوارئ/مكثَّف/تدرُّجي/شامل)،
 // نقاط الضعف بحسب مستوى بلوم (تذكُّر/فهم/تطبيق/تحليل)،
-// التوازن بين AO1 (24 درجة) و AO2 (46 درجة) في امتحان كامبريدج.
+// التوازن بين AO1 (20 درجة) و AO2 (40 درجة) في امتحان الحادي عشر.
 // ============================================================
 function _classifyPlanMode(days) {
   if (days <= 3) return { id: 'emergency', label: 'وضع الطوارئ', color: '#c62828', icon: '🚨', desc: 'تركيز كثيف على الأضعف + محاكاة سريعة' };
@@ -9609,10 +9609,10 @@ function _tasksForReviewLessons(lessons) {
 
 function _tipForWeakLevel(profile, lessons) {
   if (profile.primaryWeakness === 'AO1') {
-    return 'ضعفك في الجانب المعرفي (AO1 — تذكُّر/فهم). ركِّز على المصطلحات والمخطَّطات — هي 24 درجة من 70 في الامتحان.';
+    return 'ضعفك في الجانب المعرفي (AO1 — تذكُّر/فهم). ركِّز على المصطلحات والمخطَّطات — هي 20 درجة من 60 في الامتحان.';
   }
   if (profile.primaryWeakness === 'AO2') {
-    return 'ضعفك في الجانب التحليلي (AO2 — تطبيق/تحليل). أكثر من السيناريوهات والمقارنات — هي 46 درجة من 70 في الامتحان.';
+    return 'ضعفك في الجانب التحليلي (AO2 — تطبيق/تحليل). أكثر من السيناريوهات والمقارنات — هي 40 درجة من 60 في الامتحان.';
   }
   if (profile.primaryWeakness === 'mixed') {
     return 'ضعفك متوازن بين AO1 وAO2. ابدأ كل جلسة بـ مصطلحات (5 دقائق) ثمَّ انتقل لتطبيقات.';
@@ -9656,7 +9656,7 @@ function _buildSmartPlan(days, mode, profile) {
       lessons: [],
       tasks: [
         `🔍 افحص "تقدُّمي" لمعرفة أين تقف (${profile.accuracy}% دقَّة حاليَّاً)`,
-        `🎯 حلَّ 12 MCQ تشخيصيَّة من بنك المولِّد`,
+        `🎯 حلَّ 10 MCQ تشخيصيَّة من بنك المولِّد`,
         '📝 افتح "أخطائي" واختر سؤالاً واحداً للإعادة',
         '⏰ خطِّط أوقات الدراسة (3 جلسات × 25 دقيقة = Pomodoro)'
       ],
@@ -9682,11 +9682,11 @@ function _buildSmartPlan(days, mode, profile) {
         phase: '⚡ تدريب على نمط الامتحان',
         lessons: next,
         tasks: [
-          '🎯 12 MCQ متنوِّعة من البنك (Top 8 الأضعف أوَّلاً)',
+          '🎯 10 MCQ متنوِّعة من البنك (Top 8 الأضعف أوَّلاً)',
           '🔍 سؤالان طويلان من scenarioBank',
           '📋 راجع "أخطائي" — حلَّ كل ما فيه مرَّة أخرى'
         ],
-        tip: 'AO2 = 46 درجة من 70 — اقضِ 60% من وقت اليوم في أسئلة تحليليَّة.'
+        tip: 'AO2 = 40 درجة من 60 — اقضِ 60% من وقت اليوم في أسئلة تحليليَّة.'
       });
     }
     if (remainingDays >= 3) {
@@ -9695,7 +9695,7 @@ function _buildSmartPlan(days, mode, profile) {
         phase: '🏁 محاكاة + استعداد',
         lessons: [],
         tasks: [
-          '📝 "وضع الاختبار الإلكتروني" — 12 MCQ بمؤقِّت 30 دقيقة',
+          '📝 "وضع الاختبار الإلكتروني" — 10 MCQ بمؤقِّت 25 دقيقة',
           '✏️ راجع كل أخطاء المحاكاة بشرح مكتوب',
           '😴 الليلة: نم 8 ساعات، فطور خفيف صباحاً'
         ],
@@ -9739,7 +9739,7 @@ function _buildSmartPlan(days, mode, profile) {
             day: dayNum++,
             phase: '🔁 يوم مراجعة معمَّقة',
             lessons: recapSlice,
-            tasks: ['🧠 أعد رسم المخطَّط المفاهيمي من الذاكرة', '🎯 12 MCQ متنوِّعة من Top الأضعف', '✏️ اكتب 6 مصطلحات + تعريفاتها'],
+            tasks: ['🧠 أعد رسم المخطَّط المفاهيمي من الذاكرة', '🎯 10 MCQ متنوِّعة من Top الأضعف', '✏️ اكتب 6 مصطلحات + تعريفاتها'],
             tip: 'يوم تثبيت بدون محتوى جديد — استرجاع نشط فقط.'
           });
         }
@@ -9752,7 +9752,7 @@ function _buildSmartPlan(days, mode, profile) {
         phase: isLast ? '🏁 محاكاة الامتحان الكاملة' : '⚡ تدريب مكثَّف على MCQ',
         lessons: [],
         tasks: isLast ? [
-          '📝 "وضع الاختبار" — 12 MCQ + 3 قصيرة + 2 طويلة، 90 دقيقة',
+          '📝 "وضع الاختبار" — 10 MCQ + قصيرة + 2 طويلة، ساعتان ونصف',
           '⏱ احسب الوقت لكل سؤال (1 دقيقة / درجة تقريباً)',
           '🔍 صحِّح ذاتياً — لو <70%، أعد دراسة الأضعف غداً'
         ] : [
@@ -9816,11 +9816,11 @@ function _buildSmartPlan(days, mode, profile) {
         phase: isLast ? '🏆 محاكاة نهائيَّة شاملة' : '⚡ تدريب نمط امتحان',
         lessons: [],
         tasks: isLast ? [
-          '📝 امتحان كامل 70 درجة (12 MCQ + قصيرة + طويلة) — 90 دقيقة',
-          '📊 صحِّح وفقاً للتوزيع: 24 AO1 / 46 AO2',
+          '📝 امتحان كامل 60 درجة (10 MCQ + قصيرة + طويلة) — ساعتان ونصف',
+          '📊 صحِّح وفقاً للتوزيع: 20 AO1 / 40 AO2',
           '🔍 لو <70% — حلِّل: ما الذي أخطأتَ فيه؟ ولماذا؟'
         ] : [
-          '🎯 12 MCQ بالمؤقِّت + سؤال طويل من scenarioBank',
+          '🎯 10 MCQ بالمؤقِّت + سؤال طويل من scenarioBank',
           '⏱ تدرَّب على إدارة الوقت — 1 دقيقة لكل درجة',
           '📋 حلِّل أنماط أخطائك (سهو، جهل، أم سوء فهم؟)'
         ],
@@ -9866,7 +9866,7 @@ function _buildSmartPlan(days, mode, profile) {
             day: dayNum++,
             phase: `🔁 الجولة ${cycle + 2} — مراجعة معمَّقة`,
             lessons: weakLessonObjs.slice(0, 2),
-            tasks: ['🎯 12 MCQ من البنك (الأضعف أوَّلاً)', '🔍 سيناريو من scenarioBank', '📋 أعد كل أخطائي'],
+            tasks: ['🎯 10 MCQ من البنك (الأضعف أوَّلاً)', '🔍 سيناريو من scenarioBank', '📋 أعد كل أخطائي'],
             tip: 'كل تكرار في spaced repetition يضاعف التذكُّر.'
           });
           continue;
@@ -9890,7 +9890,7 @@ function _buildSmartPlan(days, mode, profile) {
         day: dayNum++,
         phase: isLast ? '🏆 محاكاة نهائيَّة' : '⚡ تدريب امتحان',
         lessons: [],
-        tasks: ['📝 امتحان كامل 70 درجة', '📊 تحليل الأخطاء بحسب AO1/AO2', '🔍 لو <80% — راجع نقطة الضعف الأكبر'],
+        tasks: ['📝 امتحان كامل 60 درجة', '📊 تحليل الأخطاء بحسب AO1/AO2', '🔍 لو <80% — راجع نقطة الضعف الأكبر'],
         tip: isLast ? 'تجاوزت 85%؟ ممتاز. تجاوزت 90%؟ متفوِّق.' : 'كل محاكاة تكشف نقطة ضعف جديدة.'
       });
     }
@@ -9965,9 +9965,9 @@ function generateStudyPlanHtml(daysAvailable) {
 
   // ── إرشادات كامبريدج العامَّة
   html += `<div style="margin-top:14px;padding:11px 13px;background:#e3f2fd;border-radius:8px;font-size:0.83rem;line-height:1.75;border-right:3px solid #1565c0;">
-    🎓 <strong>إرشادات لمنهج كامبريدج (الصف 12، ${_currentSemester === 'S1' ? 'فصل أوَّل' : 'فصل ثاني'}):</strong>
-    <br>• الامتحان <strong>70 درجة</strong>: 24 درجة AO1 (معرفة وفهم) + 46 درجة AO2 (تطبيق وتحليل)
-    <br>• خصِّص <strong>34% من وقتك</strong> للمصطلحات والمخطَّطات (AO1)، و<strong>66%</strong> للتطبيق والتحليل (AO2)
+    🎓 <strong>إرشادات لمنهج كامبريدج (الصف 11، ${_currentSemester === 'S1' ? 'فصل أوَّل' : 'فصل ثاني'}):</strong>
+    <br>• الامتحان <strong>60 درجة</strong>: 20 درجة AO1 (معرفة وفهم) + 40 درجة AO2 (تطبيق وتحليل)
+    <br>• خصِّص <strong>33% من وقتك</strong> للمصطلحات والمخطَّطات (AO1)، و<strong>67%</strong> للتطبيق والتحليل (AO2)
     <br>• في كل جلسة: <strong>20 دقيقة قراءة → 30 دقيقة تطبيق → 10 دقيقة استدعاء نشط</strong>
     <br>• قاعدة Pomodoro: 25 دقيقة عمل + 5 دقائق راحة، كل 4 دورات استرح 20 دقيقة
     <br>• قبل النوم: راجع 3 مفاهيم رئيسيَّة — التثبيت يحدث أثناء النوم
@@ -11592,7 +11592,7 @@ function generateQuestions() {
   container.innerHTML = `
     <div style="background:linear-gradient(135deg,#1565c0,#42a5f5);color:white;padding:18px 22px;border-radius:var(--radius);margin-bottom:16px;">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-        <strong style="font-size:1.15rem;">🧠 تم توليد ${selected.length} سؤال مبتكر</strong>
+        <strong style="font-size:1.15rem;">🧠 تم اختيار ${selected.length} ${selected.length === 1 ? 'سؤال' : (selected.length === 2 ? 'سؤالين' : (selected.length <= 10 ? 'أسئلة' : 'سؤالاً'))} من البنك</strong>
         <button onclick="printQuestions()" style="background:rgba(255,255,255,0.2);color:white;border:1px solid rgba(255,255,255,0.5);padding:8px 16px;border-radius:8px;cursor:pointer;font-family:'Tajawal';">🖨 طباعة الأسئلة</button>
       </div>
       <div style="font-size:0.85rem;opacity:0.9;">الوحدة ${unitId} | ${lessonId === 'all' ? 'جميع الدروس' : 'الدرس ' + lessonId} | النمط: ${qType === 'mcq' ? 'اختيار من متعدد' : qType === 'short' ? 'إجابة قصيرة' : qType === 'essay' ? 'إجابة طويلة' : qType === 'enrich' ? 'إثرائي' : 'متنوع'}</div>
@@ -14542,7 +14542,7 @@ function printMindMap(lessonId) {
     .mm-leaf { background: white; border: 1.5px solid; padding: 6px 10px; border-radius: 7px; font-size: 9pt; font-weight: 500; -webkit-print-color-adjust: exact; }
     .mm-footer { margin-top: 14px; padding-top: 8px; border-top: 1px solid #ddd; font-size: 8pt; color: #888; text-align: center; }
   `;
-  const content = `<h1>${data.title}</h1><div class="subtitle">خريطة ذهنية — الدرس ${lessonId || currentMindMapLesson} — منهج الأحياء الصف الحادي عشر — كامبريدج/عُمان</div>${mapHTML}<div class="mm-footer">منصَّة الأحياء التفاعلية · الفصل الدراسي الثاني · 2023-2024</div>`;
+  const content = `<h1>${data.title}</h1><div class="subtitle">خريطة ذهنية — الدرس ${lessonId || currentMindMapLesson} — منهج الأحياء الصف الحادي عشر — كامبريدج/عُمان</div>${mapHTML}<div class="mm-footer">منصَّة الأحياء التفاعلية · ${_currentSemester === 'S1' ? 'الفصل الدراسي الأوَّل' : 'الفصل الدراسي الثاني'} · 2026/2027</div>`;
   if (typeof _printInIsolatedWindow === 'function') {
     _printInIsolatedWindow(data.title, content, css);
   } else {
@@ -16031,7 +16031,7 @@ function _printInIsolatedWindow(title, contentHTML, extraCSS) {
 </head>
 <body>
 ${contentHTML}
-<div class="footer">منصَّة الأحياء التفاعلية — الصف الحادي عشر — ${_currentSemester === 'S1' ? 'الفصل الدراسي الأول' : 'الفصل الدراسي الثاني'} — كامبريدج/عُمان 2023</div>
+<div class="footer">منصَّة الأحياء التفاعلية — الصف الحادي عشر — ${_currentSemester === 'S1' ? 'الفصل الدراسي الأول' : 'الفصل الدراسي الثاني'} — كامبريدج/عُمان 2026/2027</div>
 </body>
 </html>`);
   w.document.close();
@@ -16103,7 +16103,7 @@ function printLabReport() {
 <h1>${labTitle}</h1>
 <div class="unit-label">${labUnit}</div>
 ${modelHTML}
-<div class="footer">منصَّة الأحياء التفاعلية — الصف الحادي عشر — ${_currentSemester === 'S1' ? 'الفصل الدراسي الأول' : 'الفصل الدراسي الثاني'} — كامبريدج/عُمان 2023</div>
+<div class="footer">منصَّة الأحياء التفاعلية — الصف الحادي عشر — ${_currentSemester === 'S1' ? 'الفصل الدراسي الأول' : 'الفصل الدراسي الثاني'} — كامبريدج/عُمان 2026/2027</div>
 </body>
 </html>`);
   w.document.close();
